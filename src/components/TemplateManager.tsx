@@ -15,9 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Settings, Trash2, FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 export const TemplateManager = () => {
   const [open, setOpen] = useState(false);
