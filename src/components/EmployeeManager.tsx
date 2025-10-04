@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { EmployeeImport } from "./EmployeeImport";
 import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
+import { LogoUpload } from "./LogoUpload";
 
 export const EmployeeManager = () => {
   const [name, setName] = useState("");
@@ -26,6 +27,7 @@ export const EmployeeManager = () => {
   const [letterIssueDate, setLetterIssueDate] = useState("");
   const [position, setPosition] = useState("");
   const [company, setCompany] = useState("");
+  const [companyLogoUrl, setCompanyLogoUrl] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
@@ -56,6 +58,7 @@ export const EmployeeManager = () => {
           letter_issue_date: letterIssueDate || null,
           position,
           company,
+          company_logo_url: companyLogoUrl || null,
           email,
           phone,
           department,
@@ -79,6 +82,7 @@ export const EmployeeManager = () => {
       setLetterIssueDate("");
       setPosition("");
       setCompany("");
+      setCompanyLogoUrl("");
       setEmail("");
       setPhone("");
       setDepartment("");
@@ -259,6 +263,14 @@ export const EmployeeManager = () => {
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <LogoUpload
+                currentLogoUrl={companyLogoUrl}
+                onLogoUploaded={setCompanyLogoUrl}
+                onLogoRemoved={() => setCompanyLogoUrl("")}
               />
             </div>
           </div>

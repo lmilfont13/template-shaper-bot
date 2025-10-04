@@ -53,6 +53,7 @@ export type Database = {
           address: string | null
           city: string | null
           company: string | null
+          company_logo_url: string | null
           cpf: string | null
           created_at: string
           department: string | null
@@ -77,6 +78,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           company?: string | null
+          company_logo_url?: string | null
           cpf?: string | null
           created_at?: string
           department?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           company?: string | null
+          company_logo_url?: string | null
           cpf?: string | null
           created_at?: string
           department?: string | null

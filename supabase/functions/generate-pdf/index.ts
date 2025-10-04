@@ -32,6 +32,18 @@ Deno.serve(async (req) => {
       throw new Error('Documento não encontrado');
     }
 
+    // Buscar o funcionário para pegar a logo
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('company_logo_url')
+      .eq('name', document.employee_name)
+      .maybeSingle();
+
+    // Adicionar a logo URL ao documento se existir
+    if (employee?.company_logo_url) {
+      document.company_logo_url = employee.company_logo_url;
+    }
+
     // Gerar HTML do documento
     const htmlContent = generateHtmlContent(document);
 
@@ -113,6 +125,9 @@ Deno.serve(async (req) => {
 
 function generateHtmlContent(document: any): string {
   const data = document.data || {};
+  const logoHtml = document.company_logo_url 
+    ? `<img src="${document.company_logo_url}" alt="Logo" class="company-logo" />`
+    : '';
   
   return `
 <!DOCTYPE html>
@@ -127,10 +142,24 @@ function generateHtmlContent(document: any): string {
       color: #333;
     }
     .header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 40px;
       border-bottom: 2px solid #333;
       padding-bottom: 20px;
+    }
+    .header-left {
+      flex: 1;
+    }
+    .header-right {
+      flex: 0 0 auto;
+      max-width: 200px;
+    }
+    .company-logo {
+      max-width: 150px;
+      max-height: 100px;
+      object-fit: contain;
     }
     .title {
       font-size: 24px;
@@ -166,8 +195,13 @@ function generateHtmlContent(document: any): string {
 </head>
 <body>
   <div class="header">
-    <div class="title">${document.template_name}</div>
-    <div>Funcionário: ${document.employee_name}</div>
+    <div class="header-left">
+      <div class="title">${document.template_name}</div>
+      <div>Funcionário: ${document.employee_name}</div>
+    </div>
+    <div class="header-right">
+      ${logoHtml}
+    </div>
   </div>
   
   <div class="content">
@@ -190,9 +224,18 @@ function generateHtmlContent(document: any): string {
 function formatFieldName(key: string): string {
   const fieldNames: Record<string, string> = {
     nome: 'Nome',
+    nome_colaborador: 'Nome do Colaborador',
+    loja: 'Loja',
+    nome_loja: 'Nome da Loja',
+    rg: 'RG',
+    cpf: 'CPF',
+    data_emissao: 'Data de Emissão',
+    data_carta: 'Data da Carta',
+    funcao: 'Função',
+    cargo: 'Cargo',
+    empresa: 'Empresa',
     email: 'E-mail',
     telefone: 'Telefone',
-    cargo: 'Cargo',
     departamento: 'Departamento',
     data_admissao: 'Data de Admissão',
     salario: 'Salário',
