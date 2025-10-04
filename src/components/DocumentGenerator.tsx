@@ -11,13 +11,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Eye } from "lucide-react";
+import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 
 export const DocumentGenerator = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
   const queryClient = useQueryClient();
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
@@ -162,6 +173,113 @@ export const DocumentGenerator = () => {
     generateDocument.mutate();
   };
 
+  const handlePreview = () => {
+    if (!selectedEmployeeId) {
+      toast({
+        title: "Funcionário obrigatório",
+        description: "Por favor, selecione um funcionário.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTemplate) {
+      toast({
+        title: "Template obrigatório",
+        description: "Por favor, selecione um tipo de documento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const template = templates?.find((t) => t.id === selectedTemplate);
+    const employee = employees?.find((e) => e.id === selectedEmployeeId);
+    
+    if (!template || !employee) return;
+
+    // Preparar dados
+    const templateData: Record<string, any> = {
+      nome: employee.name,
+      nome_colaborador: employee.name,
+      loja: employee.store_name || "",
+      nome_loja: employee.store_name || "",
+      rg: employee.rg || "",
+      cpf: employee.cpf || "",
+      data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+      data_carta: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+      funcao: employee.position || "",
+      cargo: employee.position || "",
+      empresa: employee.company || "",
+      email: employee.email || "",
+      telefone: employee.phone || "",
+      departamento: employee.department || "",
+      endereco: employee.address || "",
+      cidade: employee.city || "",
+      estado: employee.state || "",
+      cep: employee.zip_code || "",
+      contato_emergencia: employee.emergency_contact || "",
+      telefone_emergencia: employee.emergency_phone || "",
+    };
+
+    // Processar template
+    let processedText = template.template_content || "";
+    let previewText = processedText;
+    
+    if (processedText) {
+      Object.entries(templateData).forEach(([key, value]) => {
+        const placeholder = `{{${key}}}`;
+        processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
+      });
+      previewText = processedText;
+    }
+
+    // Substituir placeholders de imagens para preview
+    if (employee.signature_url && previewText.includes('{{assinatura}}')) {
+      previewText = previewText.replace(/{{assinatura}}/gi, '[ASSINATURA SERÁ INSERIDA AQUI]');
+    }
+    if (employee.stamp_url && previewText.includes('{{carimbo}}')) {
+      previewText = previewText.replace(/{{carimbo}}/gi, '[CARIMBO SERÁ INSERIDO AQUI]');
+    }
+
+    setPreviewData({
+      employee_name: employee.name,
+      template_name: template.name,
+      processedText: previewText,
+      originalProcessedText: processedText,
+      company_logo_url: employee.company_logo_url,
+      signature_url: employee.signature_url,
+      stamp_url: employee.stamp_url,
+      created_at: new Date().toISOString(),
+    });
+    setPreviewOpen(true);
+  };
+
+  const handleDownloadPreview = async () => {
+    if (!previewData) return;
+    
+    try {
+      await generatePDFFromTemplate({
+        ...previewData,
+        processedText: previewData.originalProcessedText,
+      });
+      toast({
+        title: "PDF baixado!",
+        description: "O documento foi baixado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao baixar PDF",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGenerateFromPreview = () => {
+    setPreviewOpen(false);
+    generateDocument.mutate();
+  };
+
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
@@ -244,7 +362,108 @@ export const DocumentGenerator = () => {
             "Gerar Documento"
           )}
         </Button>
+
+        <Button
+          onClick={handlePreview}
+          variant="outline"
+          className="w-full"
+        >
+          <Eye className="mr-2 h-4 w-4" />
+          Pré-visualizar
+        </Button>
       </CardContent>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Pré-visualização do Documento</DialogTitle>
+            <DialogDescription>
+              Revise o conteúdo antes de gerar o documento final
+            </DialogDescription>
+          </DialogHeader>
+          
+          {previewData && (
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <p className="text-sm font-semibold">Template: {previewData.template_name}</p>
+                <p className="text-sm text-muted-foreground">Funcionário: {previewData.employee_name}</p>
+              </div>
+              
+              <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                <pre className="whitespace-pre-wrap text-sm font-mono">
+                  {previewData.processedText}
+                </pre>
+              </div>
+
+              {(previewData.company_logo_url || previewData.signature_url || previewData.stamp_url) && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-semibold mb-2">Imagens incluídas:</p>
+                  <div className="flex gap-4 flex-wrap">
+                    {previewData.company_logo_url && (
+                      <div className="text-center">
+                        <img 
+                          src={previewData.company_logo_url} 
+                          alt="Logo" 
+                          className="max-h-20 mx-auto mb-1"
+                        />
+                        <p className="text-xs text-muted-foreground">Logo da Empresa</p>
+                      </div>
+                    )}
+                    {previewData.signature_url && (
+                      <div className="text-center">
+                        <img 
+                          src={previewData.signature_url} 
+                          alt="Assinatura" 
+                          className="max-h-20 mx-auto mb-1"
+                        />
+                        <p className="text-xs text-muted-foreground">Assinatura</p>
+                      </div>
+                    )}
+                    {previewData.stamp_url && (
+                      <div className="text-center">
+                        <img 
+                          src={previewData.stamp_url} 
+                          alt="Carimbo" 
+                          className="max-h-20 mx-auto mb-1"
+                        />
+                        <p className="text-xs text-muted-foreground">Carimbo</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewOpen(false)}
+            >
+              Fechar
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleDownloadPreview}
+            >
+              Baixar PDF
+            </Button>
+            <Button
+              onClick={handleGenerateFromPreview}
+              disabled={generateDocument.isPending}
+            >
+              {generateDocument.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                "Gerar e Salvar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
