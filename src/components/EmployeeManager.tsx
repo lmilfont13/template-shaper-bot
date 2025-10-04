@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EmployeeImport } from "./EmployeeImport";
 
 export const EmployeeManager = () => {
   const [name, setName] = useState("");
@@ -115,6 +116,8 @@ export const EmployeeManager = () => {
 
   return (
     <div className="space-y-6">
+      <EmployeeImport />
+      
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <div className="flex items-center gap-3">
