@@ -29,7 +29,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         img.src = data.company_logo_url!;
       });
       
-      const imgWidth = 50;
+      const imgWidth = 45;
       const imgHeight = (img.height * imgWidth) / img.width;
       pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
       logoHeight = imgHeight;
@@ -39,7 +39,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   }
 
   // Adicionar data de emissão no canto superior direito
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
   const date = new Date(data.created_at);
   const dateStr = date.toLocaleDateString('pt-BR');
@@ -52,7 +52,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   });
 
   // Ajustar yPosition para começar após a logo
-  yPosition = Math.max(margin + logoHeight + 15, dateY + 20);
+  yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
 
   // Remover placeholders de imagens do texto
   let contentText = data.processedText;
@@ -60,34 +60,33 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   contentText = contentText.replace(/{{carimbo}}/gi, '');
 
   // Conteúdo do documento com formatação de carta
-  pdf.setFontSize(11);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
 
+  // Calcular espaço disponível para texto (reservar espaço para assinatura/carimbo)
+  const maxTextHeight = pageHeight - yPosition - 65; // 65 para assinatura/carimbo
+  
   // Dividir texto em linhas respeitando a largura da página
   const maxWidth = pageWidth - (margin * 2);
   const lines = pdf.splitTextToSize(contentText, maxWidth);
+  
+  // Ajustar espaçamento entre linhas para caber em uma página
+  const lineSpacing = Math.min(5, maxTextHeight / lines.length);
 
   for (const line of lines) {
-    // Verificar se precisa de nova página (reservar espaço para assinatura e carimbo)
-    if (yPosition > pageHeight - 80) {
-      pdf.addPage();
-      yPosition = 20;
+    // Parar se ultrapassar o espaço disponível
+    if (yPosition > pageHeight - 70) {
+      break;
     }
     
     pdf.text(line, margin, yPosition);
-    yPosition += 6;
+    yPosition += lineSpacing;
   }
 
-  // Espaço antes das assinaturas
-  yPosition += 20;
+  // Posicionar assinatura e carimbo no final da página
+  const bottomY = pageHeight - 55;
 
-  // Verificar se há espaço para assinaturas, caso contrário criar nova página
-  if (yPosition > pageHeight - 70) {
-    pdf.addPage();
-    yPosition = 20;
-  }
-
-  // Assinatura no canto inferior esquerdo
+  // Assinatura no canto inferior esquerdo (menor conforme layout)
   if (data.signature_url && data.processedText.match(/{{assinatura}}/gi)) {
     try {
       const signatureImg = new Image();
@@ -98,17 +97,16 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         signatureImg.src = data.signature_url!;
       });
       
-      const signatureWidth = 50;
+      const signatureWidth = 40;
       const signatureHeight = (signatureImg.height * signatureWidth) / signatureImg.width;
-      const signatureX = margin;
-      const signatureY = Math.max(yPosition, pageHeight - 70);
-      pdf.addImage(signatureImg, 'PNG', signatureX, signatureY, signatureWidth, signatureHeight);
+      const signatureX = margin + 5;
+      pdf.addImage(signatureImg, 'PNG', signatureX, bottomY, signatureWidth, signatureHeight);
     } catch (error) {
       console.error('Erro ao carregar assinatura:', error);
     }
   }
 
-  // Carimbo no canto inferior direito
+  // Carimbo no canto inferior direito (maior que assinatura conforme layout)
   if (data.stamp_url && data.processedText.match(/{{carimbo}}/gi)) {
     try {
       const stampImg = new Image();
@@ -119,31 +117,26 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         stampImg.src = data.stamp_url!;
       });
       
-      const stampWidth = 60;
+      const stampWidth = 55;
       const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-      const stampX = pageWidth - margin - stampWidth;
-      const stampY = Math.max(yPosition, pageHeight - 70);
-      pdf.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
+      const stampX = pageWidth - margin - stampWidth - 5;
+      pdf.addImage(stampImg, 'PNG', stampX, bottomY - 5, stampWidth, stampHeight);
     } catch (error) {
       console.error('Erro ao carregar carimbo:', error);
     }
   }
 
-  // Rodapé com informações (remover paginação)
-  const totalPages = pdf.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(128, 128, 128);
-    const footerDate = new Date(data.created_at);
-    const footerDateStr = footerDate.toLocaleDateString('pt-BR');
-    const footerTimeStr = footerDate.toLocaleTimeString('pt-BR');
-    pdf.text(
-      `Documento gerado em ${footerDateStr} às ${footerTimeStr}`, 
-      margin, 
-      pageHeight - 5
-    );
-  }
+  // Rodapé com informações
+  pdf.setFontSize(7);
+  pdf.setTextColor(150, 150, 150);
+  const footerDate = new Date(data.created_at);
+  const footerDateStr = footerDate.toLocaleDateString('pt-BR');
+  const footerTimeStr = footerDate.toLocaleTimeString('pt-BR');
+  pdf.text(
+    `Gerado em ${footerDateStr} às ${footerTimeStr}`, 
+    margin, 
+    pageHeight - 5
+  );
 
   // Fazer download
   const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
