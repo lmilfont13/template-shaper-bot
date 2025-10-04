@@ -17,7 +17,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   const margin = 20;
   let yPosition = 20;
 
-  // Adicionar logo se existir
+  // Adicionar logo no canto superior esquerdo
   let logoHeight = 0;
   if (data.company_logo_url) {
     try {
@@ -29,9 +29,8 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         img.src = data.company_logo_url!;
       });
       
-      const imgWidth = 40;
+      const imgWidth = 50;
       const imgHeight = (img.height * imgWidth) / img.width;
-      // Logo no canto superior esquerdo
       pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
       logoHeight = imgHeight;
     } catch (error) {
@@ -39,49 +38,56 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
     }
   }
 
-  // Ajustar yPosition para começar após a logo
-  if (logoHeight > 0) {
-    yPosition = margin + logoHeight + 10; // 10 = espaçamento após logo
-  }
-
-  // Título do documento
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(data.template_name, margin, yPosition);
-  yPosition += 15;
-
-  // Linha divisória
-  pdf.setDrawColor(0, 0, 0);
-  pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
-
-  // Conteúdo do template processado
-  pdf.setFontSize(11);
+  // Adicionar data de emissão no canto superior direito
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
+  const date = new Date(data.created_at);
+  const dateStr = date.toLocaleDateString('pt-BR');
+  const dateText = `Data de emissão:\n${dateStr}`;
+  const dateLines = dateText.split('\n');
+  const dateY = yPosition + 5;
+  dateLines.forEach((line, index) => {
+    const textWidth = pdf.getTextWidth(line);
+    pdf.text(line, pageWidth - margin - textWidth, dateY + (index * 5));
+  });
 
-  // Processar texto e imagens
-  let contentText = data.processedText;
-  
+  // Ajustar yPosition para começar após a logo
+  yPosition = Math.max(margin + logoHeight + 15, dateY + 20);
+
   // Remover placeholders de imagens do texto
+  let contentText = data.processedText;
   contentText = contentText.replace(/{{assinatura}}/gi, '');
   contentText = contentText.replace(/{{carimbo}}/gi, '');
+
+  // Conteúdo do documento com formatação de carta
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'normal');
 
   // Dividir texto em linhas respeitando a largura da página
   const maxWidth = pageWidth - (margin * 2);
   const lines = pdf.splitTextToSize(contentText, maxWidth);
 
   for (const line of lines) {
-    // Verificar se precisa de nova página
-    if (yPosition > pageHeight - 30) {
+    // Verificar se precisa de nova página (reservar espaço para assinatura e carimbo)
+    if (yPosition > pageHeight - 80) {
       pdf.addPage();
       yPosition = 20;
     }
     
     pdf.text(line, margin, yPosition);
-    yPosition += 7;
+    yPosition += 6;
   }
 
-  // Adicionar assinatura se existir e foi solicitada no template
+  // Espaço antes das assinaturas
+  yPosition += 20;
+
+  // Verificar se há espaço para assinaturas, caso contrário criar nova página
+  if (yPosition > pageHeight - 70) {
+    pdf.addPage();
+    yPosition = 20;
+  }
+
+  // Assinatura no canto inferior esquerdo
   if (data.signature_url && data.processedText.match(/{{assinatura}}/gi)) {
     try {
       const signatureImg = new Image();
@@ -92,24 +98,17 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         signatureImg.src = data.signature_url!;
       });
       
-      // Verificar se precisa de nova página para a assinatura
-      if (yPosition > pageHeight - 60) {
-        pdf.addPage();
-        yPosition = 20;
-      }
-      
-      yPosition += 10;
-      const signatureWidth = 60;
+      const signatureWidth = 50;
       const signatureHeight = (signatureImg.height * signatureWidth) / signatureImg.width;
-      const signatureX = (pageWidth - signatureWidth) / 2; // Centralizar
-      pdf.addImage(signatureImg, 'PNG', signatureX, yPosition, signatureWidth, signatureHeight);
-      yPosition += signatureHeight + 10;
+      const signatureX = margin;
+      const signatureY = Math.max(yPosition, pageHeight - 70);
+      pdf.addImage(signatureImg, 'PNG', signatureX, signatureY, signatureWidth, signatureHeight);
     } catch (error) {
       console.error('Erro ao carregar assinatura:', error);
     }
   }
 
-  // Adicionar carimbo se existir e foi solicitado no template
+  // Carimbo no canto inferior direito
   if (data.stamp_url && data.processedText.match(/{{carimbo}}/gi)) {
     try {
       const stampImg = new Image();
@@ -120,33 +119,30 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
         stampImg.src = data.stamp_url!;
       });
       
-      // Verificar se precisa de nova página para o carimbo
-      if (yPosition > pageHeight - 60) {
-        pdf.addPage();
-        yPosition = 20;
-      }
-      
-      yPosition += 10;
-      const stampWidth = 50;
+      const stampWidth = 60;
       const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-      const stampX = (pageWidth - stampWidth) / 2; // Centralizar
-      pdf.addImage(stampImg, 'PNG', stampX, yPosition, stampWidth, stampHeight);
-      yPosition += stampHeight + 10;
+      const stampX = pageWidth - margin - stampWidth;
+      const stampY = Math.max(yPosition, pageHeight - 70);
+      pdf.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
     } catch (error) {
       console.error('Erro ao carregar carimbo:', error);
     }
   }
 
-  // Rodapé
+  // Rodapé com informações (remover paginação)
   const totalPages = pdf.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     pdf.setTextColor(128, 128, 128);
-    const date = new Date(data.created_at);
-    const dateStr = date.toLocaleDateString('pt-BR');
-    const timeStr = date.toLocaleTimeString('pt-BR');
-    pdf.text(`Documento gerado em ${dateStr} às ${timeStr} - Página ${i} de ${totalPages}`, margin, pageHeight - 10);
+    const footerDate = new Date(data.created_at);
+    const footerDateStr = footerDate.toLocaleDateString('pt-BR');
+    const footerTimeStr = footerDate.toLocaleTimeString('pt-BR');
+    pdf.text(
+      `Documento gerado em ${footerDateStr} às ${footerTimeStr}`, 
+      margin, 
+      pageHeight - 5
+    );
   }
 
   // Fazer download
