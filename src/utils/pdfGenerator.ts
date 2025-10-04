@@ -40,6 +40,7 @@ export const generatePDF = async (document: DocumentData): Promise<void> => {
   let yPosition = 20;
 
   // Adicionar logo se existir
+  let logoHeight = 0;
   if (document.company_logo_url) {
     try {
       const img = new Image();
@@ -52,10 +53,17 @@ export const generatePDF = async (document: DocumentData): Promise<void> => {
       
       const imgWidth = 40;
       const imgHeight = (img.height * imgWidth) / img.width;
-      pdf.addImage(img, 'PNG', pageWidth - margin - imgWidth, yPosition, imgWidth, imgHeight);
+      // Logo no canto superior esquerdo
+      pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
+      logoHeight = imgHeight;
     } catch (error) {
       console.error('Erro ao carregar logo:', error);
     }
+  }
+
+  // Ajustar yPosition para começar após a logo
+  if (logoHeight > 0) {
+    yPosition = margin + logoHeight + 10; // 10 = espaçamento após logo
   }
 
   // Título do documento
