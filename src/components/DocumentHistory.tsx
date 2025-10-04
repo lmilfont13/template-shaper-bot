@@ -12,6 +12,21 @@ import { ptBR } from "date-fns/locale";
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const handleDownload = async (doc: any) => {
+    if (!doc.file_path) return;
+
+    try {
+      const { data } = supabase.storage
+        .from('documents')
+        .getPublicUrl(doc.file_path);
+
+      // Abrir em nova aba para download
+      window.open(data.publicUrl, '_blank');
+    } catch (error) {
+      console.error('Erro ao baixar documento:', error);
+    }
+  };
+
   const { data: documents, isLoading } = useQuery({
     queryKey: ["generated-documents"],
     queryFn: async () => {
@@ -90,9 +105,11 @@ export const DocumentHistory = () => {
                     variant="outline"
                     size="sm"
                     className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    onClick={() => handleDownload(doc)}
+                    disabled={!doc.file_path}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download
+                    {doc.file_path ? 'Download' : 'Gerando...'}
                   </Button>
                 </div>
               </div>
