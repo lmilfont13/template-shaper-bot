@@ -40,7 +40,17 @@ Deno.serve(async (req) => {
     const pdfBlob = await generatePdfFromHtml(htmlContent);
 
     // Upload do PDF para o storage
-    const fileName = `${document.employee_name.replace(/\s+/g, '_')}_${document.template_name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    const sanitizedEmployeeName = document.employee_name
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    
+    const sanitizedTemplateName = document.template_name
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    
+    const fileName = `${sanitizedEmployeeName}_${sanitizedTemplateName}_${Date.now()}.pdf`;
     const filePath = `documents/${fileName}`;
 
     const { error: uploadError } = await supabase.storage

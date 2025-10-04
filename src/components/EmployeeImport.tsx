@@ -24,21 +24,27 @@ export const EmployeeImport = () => {
           skipEmptyLines: true,
           complete: async (results) => {
             try {
-              const employees = results.data.map((row: any) => ({
-                name: row.nome || row.name || row.Nome || "",
-                email: row.email || row.Email || "",
-                phone: row.telefone || row.phone || row.Telefone || "",
-                position: row.cargo || row.position || row.Cargo || "",
-                department: row.departamento || row.department || row.Departamento || "",
-                hire_date: row.data_admissao || row.hire_date || row.Data_Admissao || null,
-                salary: row.salario || row.salary || row.Salario || null,
-                address: row.endereco || row.address || row.Endereco || "",
-                city: row.cidade || row.city || row.Cidade || "",
-                state: row.estado || row.state || row.Estado || "",
-                zip_code: row.cep || row.zip_code || row.CEP || "",
-                emergency_contact: row.contato_emergencia || row.emergency_contact || row.Contato_Emergencia || "",
-                emergency_phone: row.telefone_emergencia || row.emergency_phone || row.Telefone_Emergencia || "",
-              }));
+              const employees = results.data
+                .map((row: any) => ({
+                  name: row.nome || row.name || row.Nome || "",
+                  email: row.email || row.Email || "",
+                  phone: row.telefone || row.phone || row.Telefone || "",
+                  position: row.cargo || row.position || row.Cargo || "",
+                  department: row.departamento || row.department || row.Departamento || "",
+                  hire_date: row.data_admissao || row.hire_date || row.Data_Admissao || null,
+                  salary: row.salario || row.salary || row.Salario || null,
+                  address: row.endereco || row.address || row.Endereco || "",
+                  city: row.cidade || row.city || row.Cidade || "",
+                  state: row.estado || row.state || row.Estado || "",
+                  zip_code: row.cep || row.zip_code || row.CEP || "",
+                  emergency_contact: row.contato_emergencia || row.emergency_contact || row.Contato_Emergencia || "",
+                  emergency_phone: row.telefone_emergencia || row.emergency_phone || row.Telefone_Emergencia || "",
+                }))
+                .filter((emp: any) => emp.name.trim() !== ""); // Filtrar funcionários sem nome
+
+              if (employees.length === 0) {
+                throw new Error("Nenhum funcionário válido encontrado. Certifique-se de que o CSV contém uma coluna 'nome' ou 'name' com valores.");
+              }
 
               const { data, error } = await supabase
                 .from("employees")
