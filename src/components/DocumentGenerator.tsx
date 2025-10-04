@@ -16,9 +16,22 @@ import { toast } from "@/hooks/use-toast";
 import { FileText, Loader2 } from "lucide-react";
 
 export const DocumentGenerator = () => {
-  const [employeeName, setEmployeeName] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const queryClient = useQueryClient();
+
+  const { data: employees, isLoading: loadingEmployees } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: templates, isLoading: loadingTemplates } = useQuery({
     queryKey: ["document-templates"],
@@ -38,17 +51,11 @@ export const DocumentGenerator = () => {
       const template = templates?.find((t) => t.id === selectedTemplate);
       if (!template) throw new Error("Template não encontrado");
 
-      // Buscar funcionário pelo nome
-      const { data: employee, error: employeeError } = await supabase
-        .from("employees")
-        .select("*")
-        .ilike("name", employeeName.trim())
-        .maybeSingle();
-
-      if (employeeError) throw employeeError;
+      // Buscar funcionário pelo ID
+      const employee = employees?.find((e) => e.id === selectedEmployeeId);
       
       if (!employee) {
-        throw new Error("Funcionário não encontrado. Cadastre-o primeiro na base de dados.");
+        throw new Error("Funcionário não encontrado. Selecione um funcionário da lista.");
       }
 
       // Preparar dados para substituição no template
@@ -109,7 +116,7 @@ export const DocumentGenerator = () => {
         description: "O documento foi criado com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
-      setEmployeeName("");
+      setSelectedEmployeeId("");
       setSelectedTemplate("");
     },
     onError: (error) => {
@@ -122,10 +129,10 @@ export const DocumentGenerator = () => {
   });
 
   const handleGenerate = () => {
-    if (!employeeName.trim()) {
+    if (!selectedEmployeeId) {
       toast({
-        title: "Nome obrigatório",
-        description: "Por favor, insira o nome do funcionário.",
+        title: "Funcionário obrigatório",
+        description: "Por favor, selecione um funcionário.",
         variant: "destructive",
       });
       return;
@@ -160,14 +167,29 @@ export const DocumentGenerator = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="employee-name">Nome do Funcionário</Label>
-          <Input
-            id="employee-name"
-            placeholder="Digite o nome completo"
-            value={employeeName}
-            onChange={(e) => setEmployeeName(e.target.value)}
-            className="transition-all duration-200 focus:shadow-[var(--shadow-elegant)]"
-          />
+          <Label htmlFor="employee-select">Funcionário</Label>
+          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+            <SelectTrigger id="employee-select" className="transition-all duration-200">
+              <SelectValue placeholder="Selecione o funcionário" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {loadingEmployees ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : employees && employees.length > 0 ? (
+                employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Nenhum funcionário cadastrado
+                </div>
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -176,7 +198,7 @@ export const DocumentGenerator = () => {
             <SelectTrigger id="template-select" className="transition-all duration-200">
               <SelectValue placeholder="Selecione o tipo de documento" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background z-50">
               {loadingTemplates ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
