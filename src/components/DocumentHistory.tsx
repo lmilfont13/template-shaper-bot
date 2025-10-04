@@ -8,22 +8,33 @@ import { Button } from "@/components/ui/button";
 import { History, Search, Download, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
+import { generatePDF } from "@/utils/pdfGenerator";
 
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleDownload = async (doc: any) => {
-    if (!doc.file_path) return;
-
     try {
-      const { data } = supabase.storage
-        .from('documents')
-        .getPublicUrl(doc.file_path);
-
-      // Abrir em nova aba para download
-      window.open(data.publicUrl, '_blank');
+      await generatePDF({
+        employee_name: doc.employee_name,
+        template_name: doc.template_name,
+        data: doc.data,
+        company_logo_url: doc.company_logo_url,
+        created_at: doc.created_at,
+      });
+      
+      toast({
+        title: "Download concluído!",
+        description: "O documento foi baixado com sucesso.",
+      });
     } catch (error) {
-      console.error('Erro ao baixar documento:', error);
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível gerar o documento.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -36,6 +47,22 @@ export const DocumentHistory = () => {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
+      
+      // Buscar logos dos funcionários
+      if (data && data.length > 0) {
+        const employeeNames = [...new Set(data.map(d => d.employee_name))];
+        const { data: employeesData } = await supabase
+          .from("employees")
+          .select("name, company_logo_url")
+          .in("name", employeeNames);
+        
+        // Mapear logos para documentos
+        return data.map(doc => ({
+          ...doc,
+          company_logo_url: employeesData?.find(e => e.name === doc.employee_name)?.company_logo_url || null
+        }));
+      }
+      
       return data;
     },
   });
@@ -106,10 +133,9 @@ export const DocumentHistory = () => {
                     size="sm"
                     className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                     onClick={() => handleDownload(doc)}
-                    disabled={!doc.file_path}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    {doc.file_path ? 'Download' : 'Gerando...'}
+                    Download PDF
                   </Button>
                 </div>
               </div>

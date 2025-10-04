@@ -106,17 +106,7 @@ export const DocumentGenerator = () => {
         .single();
 
       if (error) throw error;
-
-      // Gerar o PDF em background
-      try {
-        await supabase.functions.invoke('generate-pdf', {
-          body: { documentId: data.id }
-        });
-      } catch (pdfError) {
-        console.error('Erro ao gerar PDF:', pdfError);
-        // Não falhar a operação se o PDF não for gerado
-      }
-
+      
       return data;
     },
     onSuccess: () => {
