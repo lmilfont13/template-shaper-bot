@@ -17,11 +17,23 @@ Deno.serve(async (req) => {
     const localUrl = Deno.env.get('SUPABASE_URL');
     const localServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+    // Validate that secrets are configured
     if (!externalUrl || !externalKey) {
-      throw new Error('External Supabase credentials not configured');
+      throw new Error('External Supabase credentials not configured. Please configure EXTERNAL_SUPABASE_URL and EXTERNAL_SUPABASE_ANON_KEY secrets.');
+    }
+
+    // Validate that the URL is actually a URL (starts with http/https)
+    if (!externalUrl.startsWith('http://') && !externalUrl.startsWith('https://')) {
+      throw new Error(`Invalid EXTERNAL_SUPABASE_URL format. Expected a URL starting with http:// or https://, got: ${externalUrl.substring(0, 50)}...`);
+    }
+
+    // Validate that the key looks like a JWT (should start with eyJ)
+    if (!externalKey.startsWith('eyJ')) {
+      throw new Error(`Invalid EXTERNAL_SUPABASE_ANON_KEY format. Expected a JWT token starting with eyJ, got: ${externalKey.substring(0, 50)}...`);
     }
 
     console.log('Starting employee import...');
+    console.log('External URL configured:', externalUrl);
 
     // Create clients
     const externalSupabase = createClient(externalUrl, externalKey);
