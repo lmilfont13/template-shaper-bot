@@ -51,28 +51,45 @@ export const DocumentGenerator = () => {
       const template = templates?.find((t) => t.id === selectedTemplate);
       if (!template) throw new Error("Template não encontrado");
 
-      // Buscar funcionário pelo ID
       const employee = employees?.find((e) => e.id === selectedEmployeeId);
       
       if (!employee) {
         throw new Error("Funcionário não encontrado. Selecione um funcionário da lista.");
       }
 
-      // Processar template do Google Docs
-      const { data: processedData, error: processError } = await supabase.functions.invoke('process-template', {
-        body: {
-          templateId: selectedTemplate,
-          employeeId: selectedEmployeeId,
-        }
-      });
+      // Preparar dados para substituição
+      const templateData: Record<string, any> = {
+        nome: employee.name,
+        nome_colaborador: employee.name,
+        loja: employee.store_name || "",
+        nome_loja: employee.store_name || "",
+        rg: employee.rg || "",
+        cpf: employee.cpf || "",
+        data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+        data_carta: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+        funcao: employee.position || "",
+        cargo: employee.position || "",
+        empresa: employee.company || "",
+        email: employee.email || "",
+        telefone: employee.phone || "",
+        departamento: employee.department || "",
+        data_admissao: employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : "",
+        salario: employee.salary ? String(employee.salary) : "",
+        endereco: employee.address || "",
+        cidade: employee.city || "",
+        estado: employee.state || "",
+        cep: employee.zip_code || "",
+        contato_emergencia: employee.emergency_contact || "",
+        telefone_emergencia: employee.emergency_phone || "",
+      };
 
-      if (processError) {
-        console.error('Erro ao processar template:', processError);
-        throw new Error(`Erro ao processar template: ${processError.message}`);
-      }
-
-      if (!processedData || !processedData.success) {
-        throw new Error(processedData?.error || 'Erro ao processar template');
+      // Processar template se houver conteúdo
+      let processedText = template.template_content || "";
+      if (processedText) {
+        Object.entries(templateData).forEach(([key, value]) => {
+          const placeholder = `{{${key}}}`;
+          processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
+        });
       }
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -88,7 +105,7 @@ export const DocumentGenerator = () => {
           template_id: selectedTemplate,
           template_name: template.name,
           status: "completed",
-          data: processedData.templateData,
+          data: { ...templateData, processedText },
           user_id: user.id,
         })
         .select()

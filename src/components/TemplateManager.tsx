@@ -23,9 +23,8 @@ export const TemplateManager = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState("");
-  const [googleDocId, setGoogleDocId] = useState("");
+  const [templateContent, setTemplateContent] = useState("");
   const [description, setDescription] = useState("");
-  const [fields, setFields] = useState("");
   const queryClient = useQueryClient();
 
   const { data: templates, isLoading } = useQuery({
@@ -43,14 +42,12 @@ export const TemplateManager = () => {
 
   const createTemplate = useMutation({
     mutationFn: async () => {
-      const parsedFields = fields.trim() ? fields.split(',').map(f => f.trim()) : [];
-      
       const { error } = await supabase.from("document_templates").insert({
         name,
         type,
-        google_doc_id: googleDocId,
+        template_content: templateContent,
         description,
-        fields: parsedFields,
+        google_doc_id: "", // Mantém por compatibilidade mas não é mais necessário
       });
 
       if (error) throw error;
@@ -64,9 +61,8 @@ export const TemplateManager = () => {
       setOpen(false);
       setName("");
       setType("");
-      setGoogleDocId("");
+      setTemplateContent("");
       setDescription("");
-      setFields("");
     },
     onError: (error) => {
       toast({
@@ -106,7 +102,7 @@ export const TemplateManager = () => {
             <div>
               <CardTitle>Gerenciar Templates</CardTitle>
               <CardDescription>
-                Configure os templates do Google Docs
+                Crie e gerencie templates de documentos
               </CardDescription>
             </div>
           </div>
@@ -121,7 +117,7 @@ export const TemplateManager = () => {
               <DialogHeader>
                 <DialogTitle>Adicionar Template</DialogTitle>
                 <DialogDescription>
-                  Configure um novo template do Google Docs
+                  Escreva o conteúdo do template usando placeholders como {"`{{nome}}`"}, {"`{{cargo}}`"}, etc.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -129,7 +125,7 @@ export const TemplateManager = () => {
                   <Label htmlFor="template-name">Nome do Template</Label>
                   <Input
                     id="template-name"
-                    placeholder="Ex: Contrato de Trabalho"
+                    placeholder="Ex: Carta de Apresentação"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -138,18 +134,9 @@ export const TemplateManager = () => {
                   <Label htmlFor="template-type">Tipo</Label>
                   <Input
                     id="template-type"
-                    placeholder="Ex: Contrato"
+                    placeholder="Ex: Carta"
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="google-doc-id">ID do Google Docs</Label>
-                  <Input
-                    id="google-doc-id"
-                    placeholder="ID do documento no Google Docs"
-                    value={googleDocId}
-                    onChange={(e) => setGoogleDocId(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -159,28 +146,26 @@ export const TemplateManager = () => {
                     placeholder="Breve descrição do template"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="transition-all duration-200"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="fields">Campos Dinâmicos</Label>
+                  <Label htmlFor="template-content">Conteúdo do Template</Label>
                   <Textarea
-                    id="fields"
-                    placeholder="nome, cargo, departamento, data_admissao, salario, endereco..."
-                    value={fields}
-                    onChange={(e) => setFields(e.target.value)}
-                    className="transition-all duration-200 min-h-[80px]"
+                    id="template-content"
+                    placeholder="Exemplo:\n\nCarta de Apresentação\n\nA empresa [empresa] apresenta o colaborador [nome], portador do RG [rg] e CPF [cpf], para exercer a função de [funcao] na loja [loja].\n\nData de emissão: [data_emissao]\n\nAtenciosamente,\nDepartamento de RH\n\nNota: Use {{campo}} no seu template, não []"
+                    value={templateContent}
+                    onChange={(e) => setTemplateContent(e.target.value)}
+                    className="min-h-[200px] font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Separe os campos por vírgula. Estes são os dados que serão substituídos no template do Google Docs usando a sintaxe {`{{campo}}`}
+                    Use placeholders como: {`{{nome}}`}, {`{{rg}}`}, {`{{cpf}}`}, {`{{funcao}}`}, {`{{empresa}}`}, {`{{loja}}`}, {`{{data_emissao}}`}, {`{{cargo}}`}, {`{{email}}`}, {`{{telefone}}`}, etc.
                   </p>
                 </div>
               </div>
               <DialogFooter>
                 <Button
                   onClick={() => createTemplate.mutate()}
-                  disabled={!name || !type || !googleDocId || createTemplate.isPending}
+                  disabled={!name || !type || !templateContent || createTemplate.isPending}
                   className="bg-gradient-to-r from-primary to-accent"
                 >
                   Salvar Template
@@ -217,9 +202,11 @@ export const TemplateManager = () => {
                           {template.description}
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground font-mono">
-                        ID: {template.google_doc_id}
-                      </p>
+                      {template.template_content && (
+                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                          {template.template_content}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Button

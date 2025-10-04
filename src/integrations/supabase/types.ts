@@ -22,6 +22,7 @@ export type Database = {
           google_doc_id: string
           id: string
           name: string
+          template_content: string | null
           type: string
           updated_at: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           google_doc_id: string
           id?: string
           name: string
+          template_content?: string | null
           type: string
           updated_at?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           google_doc_id?: string
           id?: string
           name?: string
+          template_content?: string | null
           type?: string
           updated_at?: string
         }

@@ -19,42 +19,22 @@ export const DocumentHistory = () => {
     try {
       setDownloadingId(doc.id);
 
-      // Buscar o template para pegar o google_doc_id
-      const { data: template } = await supabase
-        .from('document_templates')
-        .select('google_doc_id')
-        .eq('id', doc.template_id)
-        .single();
-
-      // Buscar funcionário para pegar ID
+      // Buscar funcionário para pegar logo
       const { data: employee } = await supabase
         .from('employees')
-        .select('id, company_logo_url')
+        .select('company_logo_url')
         .eq('name', doc.employee_name)
         .maybeSingle();
 
-      if (!employee || !template) {
-        throw new Error('Dados do documento não encontrados');
-      }
-
-      // Processar template novamente para gerar PDF
-      const { data: processedData, error: processError } = await supabase.functions.invoke('process-template', {
-        body: {
-          templateId: doc.template_id,
-          employeeId: employee.id,
-        }
-      });
-
-      if (processError || !processedData?.success) {
-        throw new Error(processedData?.error || 'Erro ao processar template');
-      }
+      // Usar o texto processado que já está no documento
+      const processedText = doc.data?.processedText || '';
 
       // Gerar PDF com o conteúdo do template
       await generatePDFFromTemplate({
         employee_name: doc.employee_name,
         template_name: doc.template_name,
-        processedText: processedData.processedText,
-        company_logo_url: employee.company_logo_url,
+        processedText: processedText,
+        company_logo_url: employee?.company_logo_url,
         created_at: doc.created_at,
       });
       
