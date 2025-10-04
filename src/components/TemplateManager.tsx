@@ -143,6 +143,8 @@ export const TemplateManager = () => {
                 <DialogTitle>{editingTemplate ? "Editar Template" : "Adicionar Template"}</DialogTitle>
                 <DialogDescription>
                   Escreva o conteúdo do template usando placeholders como {"`{{nome}}`"}, {"`{{cargo}}`"}, etc.
+                  <br />
+                  Para adicionar imagens, use: {"`{{assinatura}}`"} ou {"`{{carimbo}}`"}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -177,13 +179,13 @@ export const TemplateManager = () => {
                   <Label htmlFor="template-content">Conteúdo do Template</Label>
                   <Textarea
                     id="template-content"
-                    placeholder="Exemplo:\n\nCarta de Apresentação\n\nA empresa [empresa] apresenta o colaborador [nome], portador do RG [rg] e CPF [cpf], para exercer a função de [funcao] na loja [loja].\n\nData de emissão: [data_emissao]\n\nAtenciosamente,\nDepartamento de RH\n\nNota: Use {{campo}} no seu template, não []"
+                    placeholder="Exemplo:\n\nCarta de Apresentação\n\nA empresa {{empresa}} apresenta o colaborador {{nome}}, portador do RG {{rg}} e CPF {{cpf}}, para exercer a função de {{funcao}} na loja {{loja}}.\n\nData de emissão: {{data_emissao}}\n\nAtenciosamente,\nDepartamento de RH\n\n{{assinatura}}\n{{carimbo}}"
                     value={templateContent}
                     onChange={(e) => setTemplateContent(e.target.value)}
                     className="min-h-[200px] font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use placeholders como: {`{{nome}}`}, {`{{rg}}`}, {`{{cpf}}`}, {`{{funcao}}`}, {`{{empresa}}`}, {`{{loja}}`}, {`{{data_emissao}}`}, {`{{cargo}}`}, {`{{email}}`}, {`{{telefone}}`}, etc.
+                    Use placeholders como: {`{{nome}}`}, {`{{rg}}`}, {`{{cpf}}`}, {`{{funcao}}`}, {`{{empresa}}`}, {`{{loja}}`}, {`{{data_emissao}}`}, {`{{cargo}}`}, {`{{email}}`}, {`{{telefone}}`}, {`{{assinatura}}`}, {`{{carimbo}}`}, etc.
                   </p>
                 </div>
               </div>

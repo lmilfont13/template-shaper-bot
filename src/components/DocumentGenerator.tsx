@@ -105,7 +105,14 @@ export const DocumentGenerator = () => {
           template_id: selectedTemplate,
           template_name: template.name,
           status: "completed",
-          data: { ...templateData, processedText },
+          data: { 
+            ...templateData, 
+            processedText,
+            company_logo_url: employee.company_logo_url || undefined,
+            signature_url: employee.signature_url || undefined,
+            stamp_url: employee.stamp_url || undefined,
+            created_at: new Date().toISOString(),
+          },
           user_id: user.id,
         })
         .select()

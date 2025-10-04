@@ -18,6 +18,7 @@ import {
 import { EmployeeImport } from "./EmployeeImport";
 import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
 import { LogoUpload } from "./LogoUpload";
+import { ImageUpload } from "./ImageUpload";
 
 export const EmployeeManager = () => {
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
@@ -32,6 +33,8 @@ export const EmployeeManager = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [stampUrl, setStampUrl] = useState("");
   const queryClient = useQueryClient();
 
   const { data: employees, isLoading } = useQuery({
@@ -61,6 +64,8 @@ export const EmployeeManager = () => {
         email,
         phone,
         department,
+        signature_url: signatureUrl || null,
+        stamp_url: stampUrl || null,
       };
 
       if (editingEmployee) {
@@ -116,6 +121,8 @@ export const EmployeeManager = () => {
     setEmail("");
     setPhone("");
     setDepartment("");
+    setSignatureUrl("");
+    setStampUrl("");
   };
 
   const handleEdit = (employee: any) => {
@@ -131,6 +138,8 @@ export const EmployeeManager = () => {
     setEmail(employee.email || "");
     setPhone(employee.phone || "");
     setDepartment(employee.department || "");
+    setSignatureUrl(employee.signature_url || "");
+    setStampUrl(employee.stamp_url || "");
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -309,6 +318,28 @@ export const EmployeeManager = () => {
                 currentLogoUrl={companyLogoUrl}
                 onLogoUploaded={setCompanyLogoUrl}
                 onLogoRemoved={() => setCompanyLogoUrl("")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <ImageUpload
+                id="signature-upload"
+                label="Assinatura"
+                currentImageUrl={signatureUrl}
+                onImageUploaded={setSignatureUrl}
+                onImageRemoved={() => setSignatureUrl("")}
+                folder="signatures"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <ImageUpload
+                id="stamp-upload"
+                label="Carimbo"
+                currentImageUrl={stampUrl}
+                onImageUploaded={setStampUrl}
+                onImageRemoved={() => setStampUrl("")}
+                folder="stamps"
               />
             </div>
           </div>

@@ -5,6 +5,8 @@ interface TemplateDocumentData {
   template_name: string;
   processedText: string;
   company_logo_url?: string;
+  signature_url?: string;
+  stamp_url?: string;
   created_at: string;
 }
 
@@ -49,9 +51,16 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   pdf.setFontSize(11);
   pdf.setFont('helvetica', 'normal');
 
+  // Processar texto e imagens
+  let contentText = data.processedText;
+  
+  // Remover placeholders de imagens do texto
+  contentText = contentText.replace(/{{assinatura}}/gi, '');
+  contentText = contentText.replace(/{{carimbo}}/gi, '');
+
   // Dividir texto em linhas respeitando a largura da página
   const maxWidth = pageWidth - (margin * 2);
-  const lines = pdf.splitTextToSize(data.processedText, maxWidth);
+  const lines = pdf.splitTextToSize(contentText, maxWidth);
 
   for (const line of lines) {
     // Verificar se precisa de nova página
@@ -62,6 +71,62 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
     
     pdf.text(line, margin, yPosition);
     yPosition += 7;
+  }
+
+  // Adicionar assinatura se existir e foi solicitada no template
+  if (data.signature_url && data.processedText.match(/{{assinatura}}/gi)) {
+    try {
+      const signatureImg = new Image();
+      signatureImg.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        signatureImg.onload = resolve;
+        signatureImg.onerror = reject;
+        signatureImg.src = data.signature_url!;
+      });
+      
+      // Verificar se precisa de nova página para a assinatura
+      if (yPosition > pageHeight - 60) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      yPosition += 10;
+      const signatureWidth = 60;
+      const signatureHeight = (signatureImg.height * signatureWidth) / signatureImg.width;
+      const signatureX = (pageWidth - signatureWidth) / 2; // Centralizar
+      pdf.addImage(signatureImg, 'PNG', signatureX, yPosition, signatureWidth, signatureHeight);
+      yPosition += signatureHeight + 10;
+    } catch (error) {
+      console.error('Erro ao carregar assinatura:', error);
+    }
+  }
+
+  // Adicionar carimbo se existir e foi solicitado no template
+  if (data.stamp_url && data.processedText.match(/{{carimbo}}/gi)) {
+    try {
+      const stampImg = new Image();
+      stampImg.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        stampImg.onload = resolve;
+        stampImg.onerror = reject;
+        stampImg.src = data.stamp_url!;
+      });
+      
+      // Verificar se precisa de nova página para o carimbo
+      if (yPosition > pageHeight - 60) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      yPosition += 10;
+      const stampWidth = 50;
+      const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
+      const stampX = (pageWidth - stampWidth) / 2; // Centralizar
+      pdf.addImage(stampImg, 'PNG', stampX, yPosition, stampWidth, stampHeight);
+      yPosition += stampHeight + 10;
+    } catch (error) {
+      console.error('Erro ao carregar carimbo:', error);
+    }
   }
 
   // Rodapé
