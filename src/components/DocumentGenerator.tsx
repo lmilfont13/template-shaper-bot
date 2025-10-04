@@ -70,6 +70,12 @@ export const DocumentGenerator = () => {
         ...additionalData,
       };
 
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const { data, error } = await supabase
         .from("generated_documents")
         .insert({
@@ -78,6 +84,7 @@ export const DocumentGenerator = () => {
           template_name: template.name,
           status: "completed",
           data: templateData,
+          user_id: user.id,
         })
         .select()
         .single();

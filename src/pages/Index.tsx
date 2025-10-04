@@ -1,44 +1,83 @@
+import { useState, useEffect } from "react";
 import { DocumentGenerator } from "@/components/DocumentGenerator";
 import { DocumentHistory } from "@/components/DocumentHistory";
 import { TemplateManager } from "@/components/TemplateManager";
 import { EmployeeManager } from "@/components/EmployeeManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { FileText, LogOut } from "lucide-react";
 
 const Index = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      setIsAdmin(data?.role === "admin");
+    };
+
+    checkAdminStatus();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <header className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[var(--shadow-elegant)]">
-              <FileText className="h-8 w-8 text-primary-foreground" />
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[var(--shadow-elegant)]">
+                <FileText className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Sistema de Documentos
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Geração automatizada de documentos via Google Docs
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Sistema de Documentos
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Geração automatizada de documentos via Google Docs
-              </p>
-            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
           </div>
         </header>
 
         <Tabs defaultValue="generate" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4 lg:w-[800px]' : 'grid-cols-2 lg:w-[400px]'}`}>
             <TabsTrigger value="generate" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Gerar
             </TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Histórico
             </TabsTrigger>
-            <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
-              Funcionários
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
-              Templates
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
+                Funcionários
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger value="templates" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
+                Templates
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="generate" className="space-y-6">
@@ -84,13 +123,17 @@ const Index = () => {
             <DocumentHistory />
           </TabsContent>
 
-          <TabsContent value="employees">
-            <EmployeeManager />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="employees">
+              <EmployeeManager />
+            </TabsContent>
+          )}
 
-          <TabsContent value="templates">
-            <TemplateManager />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="templates">
+              <TemplateManager />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
