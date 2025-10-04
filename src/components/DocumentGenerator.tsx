@@ -58,33 +58,22 @@ export const DocumentGenerator = () => {
         throw new Error("Funcionário não encontrado. Selecione um funcionário da lista.");
       }
 
-      // Preparar dados para substituição no template
-      const additionalData = (employee.additional_data || {}) as Record<string, any>;
-      const templateData: Record<string, any> = {
-        nome: employee.name,
-        nome_colaborador: employee.name,
-        loja: employee.store_name || "",
-        nome_loja: employee.store_name || "",
-        rg: employee.rg || "",
-        cpf: employee.cpf || "",
-        data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
-        data_carta: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
-        funcao: employee.position || "",
-        cargo: employee.position || "",
-        empresa: employee.company || "",
-        email: employee.email || "",
-        telefone: employee.phone || "",
-        departamento: employee.department || "",
-        data_admissao: employee.hire_date || "",
-        salario: employee.salary || "",
-        endereco: employee.address || "",
-        cidade: employee.city || "",
-        estado: employee.state || "",
-        cep: employee.zip_code || "",
-        contato_emergencia: employee.emergency_contact || "",
-        telefone_emergencia: employee.emergency_phone || "",
-        ...additionalData,
-      };
+      // Processar template do Google Docs
+      const { data: processedData, error: processError } = await supabase.functions.invoke('process-template', {
+        body: {
+          templateId: selectedTemplate,
+          employeeId: selectedEmployeeId,
+        }
+      });
+
+      if (processError) {
+        console.error('Erro ao processar template:', processError);
+        throw new Error(`Erro ao processar template: ${processError.message}`);
+      }
+
+      if (!processedData || !processedData.success) {
+        throw new Error(processedData?.error || 'Erro ao processar template');
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -99,7 +88,7 @@ export const DocumentGenerator = () => {
           template_id: selectedTemplate,
           template_name: template.name,
           status: "completed",
-          data: templateData,
+          data: processedData.templateData,
           user_id: user.id,
         })
         .select()

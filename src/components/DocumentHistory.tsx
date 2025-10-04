@@ -5,22 +5,56 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, Search, Download, Calendar, FileText } from "lucide-react";
+import { History, Search, Download, Calendar, FileText, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
-import { generatePDF } from "@/utils/pdfGenerator";
+import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleDownload = async (doc: any) => {
     try {
-      await generatePDF({
+      setDownloadingId(doc.id);
+
+      // Buscar o template para pegar o google_doc_id
+      const { data: template } = await supabase
+        .from('document_templates')
+        .select('google_doc_id')
+        .eq('id', doc.template_id)
+        .single();
+
+      // Buscar funcionário para pegar ID
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('id, company_logo_url')
+        .eq('name', doc.employee_name)
+        .maybeSingle();
+
+      if (!employee || !template) {
+        throw new Error('Dados do documento não encontrados');
+      }
+
+      // Processar template novamente para gerar PDF
+      const { data: processedData, error: processError } = await supabase.functions.invoke('process-template', {
+        body: {
+          templateId: doc.template_id,
+          employeeId: employee.id,
+        }
+      });
+
+      if (processError || !processedData?.success) {
+        throw new Error(processedData?.error || 'Erro ao processar template');
+      }
+
+      // Gerar PDF com o conteúdo do template
+      await generatePDFFromTemplate({
         employee_name: doc.employee_name,
         template_name: doc.template_name,
-        data: doc.data,
-        company_logo_url: doc.company_logo_url,
+        processedText: processedData.processedText,
+        company_logo_url: employee.company_logo_url,
         created_at: doc.created_at,
       });
       
@@ -28,13 +62,15 @@ export const DocumentHistory = () => {
         title: "Download concluído!",
         description: "O documento foi baixado com sucesso.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao gerar PDF:', error);
       toast({
         title: "Erro ao gerar PDF",
-        description: "Não foi possível gerar o documento.",
+        description: error.message || "Não foi possível gerar o documento.",
         variant: "destructive",
       });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -133,9 +169,19 @@ export const DocumentHistory = () => {
                     size="sm"
                     className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                     onClick={() => handleDownload(doc)}
+                    disabled={downloadingId === doc.id}
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
+                    {downloadingId === doc.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
