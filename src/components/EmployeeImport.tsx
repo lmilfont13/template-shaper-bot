@@ -4,70 +4,76 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Download, Loader2, CheckCircle2, AlertCircle, Upload } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Upload, ArrowRight, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import Papa from "papaparse";
+
+const FIELD_MAPPING = {
+  name: "Nome",
+  store_name: "Loja",
+  rg: "RG",
+  cpf: "CPF",
+  letter_issue_date: "Data de Emissão",
+  position: "Cargo/Função",
+  company: "Empresa",
+  email: "Email",
+  phone: "Telefone",
+  department: "Departamento",
+  hire_date: "Data de Admissão",
+  salary: "Salário",
+  address: "Endereço",
+  city: "Cidade",
+  state: "Estado",
+  zip_code: "CEP",
+  emergency_contact: "Contato de Emergência",
+  emergency_phone: "Telefone de Emergência",
+};
 
 export const EmployeeImport = () => {
   const [importResult, setImportResult] = useState<any>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvColumns, setCsvColumns] = useState<string[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [step, setStep] = useState<1 | 2>(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const importFromCsv = useMutation({
-    mutationFn: async (file: File) => {
-      return new Promise((resolve, reject) => {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: async (results) => {
-            try {
-              const employees = results.data
-                .map((row: any) => ({
-                  name: row.nome || row.name || row.Nome || row.nome_colaborador || "",
-                  store_name: row.loja || row.store_name || row.nome_loja || "",
-                  rg: row.rg || row.RG || "",
-                  cpf: row.cpf || row.CPF || "",
-                  letter_issue_date: row.data_emissao || row.letter_issue_date || row.data_carta || null,
-                  position: row.funcao || row.cargo || row.position || row.Cargo || "",
-                  company: row.empresa || row.company || row.Empresa || "",
-                  email: row.email || row.Email || "",
-                  phone: row.telefone || row.phone || row.Telefone || "",
-                  department: row.departamento || row.department || row.Departamento || "",
-                  hire_date: row.data_admissao || row.hire_date || row.Data_Admissao || null,
-                  salary: row.salario || row.salary || row.Salario || null,
-                  address: row.endereco || row.address || row.Endereco || "",
-                  city: row.cidade || row.city || row.Cidade || "",
-                  state: row.estado || row.state || row.Estado || "",
-                  zip_code: row.cep || row.zip_code || row.CEP || "",
-                  emergency_contact: row.contato_emergencia || row.emergency_contact || row.Contato_Emergencia || "",
-                  emergency_phone: row.telefone_emergencia || row.emergency_phone || row.Telefone_Emergencia || "",
-                }))
-                .filter((emp: any) => emp.name.trim() !== ""); // Filtrar funcionários sem nome
+    mutationFn: async () => {
+      if (!csvData.length || !Object.keys(columnMapping).length) {
+        throw new Error("Dados ou mapeamento de colunas inválido");
+      }
 
-              if (employees.length === 0) {
-                throw new Error("Nenhum funcionário válido encontrado. Certifique-se de que o CSV contém uma coluna 'nome' ou 'name' com valores.");
-              }
-
-              const { data, error } = await supabase
-                .from("employees")
-                .insert(employees)
-                .select();
-
-              if (error) throw error;
-
-              resolve({ success: true, imported: data.length, message: `${data.length} funcionário(s) importado(s) com sucesso` });
-            } catch (error: any) {
-              reject(error);
+      const employees = csvData
+        .map((row: any) => {
+          const employee: any = {};
+          Object.entries(columnMapping).forEach(([dbField, csvColumn]) => {
+            if (csvColumn && csvColumn !== "ignore") {
+              employee[dbField] = row[csvColumn] || null;
             }
-          },
-          error: (error) => {
-            reject(new Error(`Erro ao processar CSV: ${error.message}`));
-          }
-        });
-      });
+          });
+          return employee;
+        })
+        .filter((emp: any) => emp.name && emp.name.trim() !== "");
+
+      if (employees.length === 0) {
+        throw new Error("Nenhum funcionário válido encontrado após o mapeamento");
+      }
+
+      const { data, error } = await supabase
+        .from("employees")
+        .insert(employees)
+        .select();
+
+      if (error) throw error;
+
+      return { success: true, imported: data.length, message: `${data.length} funcionário(s) importado(s) com sucesso` };
     },
     onSuccess: (data: any) => {
       setImportResult(data);
@@ -76,10 +82,7 @@ export const EmployeeImport = () => {
         description: data.message,
       });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      resetImport();
     },
     onError: (error: any) => {
       toast({
@@ -91,41 +94,17 @@ export const EmployeeImport = () => {
     },
   });
 
-  const importEmployees = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('import-employees', {
-        body: {},
-      });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      setImportResult(data);
-      
-      if (data.success) {
-        toast({
-          title: "Importação concluída!",
-          description: `${data.imported} funcionário(s) importado(s) com sucesso.`,
-        });
-        queryClient.invalidateQueries({ queryKey: ["employees"] });
-      } else {
-        toast({
-          title: "Erro na importação",
-          description: data.error || "Ocorreu um erro desconhecido",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao importar funcionários",
-        description: error.message,
-        variant: "destructive",
-      });
-      setImportResult({ success: false, error: error.message });
-    },
-  });
+  const resetImport = () => {
+    setSelectedFile(null);
+    setCsvData([]);
+    setCsvColumns([]);
+    setSelectedColumns([]);
+    setColumnMapping({});
+    setStep(1);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -138,11 +117,54 @@ export const EmployeeImport = () => {
         });
         return;
       }
-      setSelectedFile(file);
+      
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        preview: 5,
+        complete: (results) => {
+          const columns = results.meta.fields || [];
+          setCsvColumns(columns);
+          setCsvData(results.data);
+          setSelectedColumns(columns);
+          setSelectedFile(file);
+          
+          // Auto-mapping baseado em nomes comuns
+          const autoMapping: Record<string, string> = {};
+          columns.forEach((col) => {
+            const colLower = col.toLowerCase();
+            if (colLower.includes('nome') || colLower === 'name') autoMapping.name = col;
+            if (colLower.includes('loja') || colLower.includes('store')) autoMapping.store_name = col;
+            if (colLower === 'rg') autoMapping.rg = col;
+            if (colLower === 'cpf') autoMapping.cpf = col;
+            if (colLower.includes('cargo') || colLower.includes('funcao') || colLower === 'position') autoMapping.position = col;
+            if (colLower.includes('empresa') || colLower === 'company') autoMapping.company = col;
+            if (colLower === 'email') autoMapping.email = col;
+            if (colLower.includes('telefone') || colLower === 'phone') autoMapping.phone = col;
+            if (colLower.includes('departamento') || colLower === 'department') autoMapping.department = col;
+          });
+          setColumnMapping(autoMapping);
+        },
+        error: (error) => {
+          toast({
+            title: "Erro ao ler CSV",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      });
     }
   };
 
-  const handleCsvImport = () => {
+  const handleColumnToggle = (column: string) => {
+    setSelectedColumns(prev =>
+      prev.includes(column)
+        ? prev.filter(c => c !== column)
+        : [...prev, column]
+    );
+  };
+
+  const handleNextStep = () => {
     if (!selectedFile) {
       toast({
         title: "Arquivo não selecionado",
@@ -151,93 +173,190 @@ export const EmployeeImport = () => {
       });
       return;
     }
-    importFromCsv.mutate(selectedFile);
+
+    Papa.parse(selectedFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const filteredData = results.data.map((row: any) => {
+          const filtered: any = {};
+          selectedColumns.forEach(col => {
+            filtered[col] = row[col];
+          });
+          return filtered;
+        });
+        setCsvData(filteredData);
+        setStep(2);
+      }
+    });
   };
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-            <Upload className="h-6 w-6 text-primary-foreground" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
+              <Upload className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <CardTitle>Importar Funcionários via CSV</CardTitle>
+              <CardDescription>
+                {step === 1 ? "Passo 1: Selecione o arquivo e escolha as colunas" : "Passo 2: Mapeie as colunas para os campos"}
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle>Importar Funcionários</CardTitle>
-            <CardDescription>
-              Importe funcionários de uma planilha CSV ou do Supabase externo
-            </CardDescription>
-          </div>
+          {selectedFile && (
+            <Button variant="outline" size="sm" onClick={resetImport}>
+              Cancelar
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* CSV Import Section */}
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-muted/50 space-y-3">
-            <p className="text-sm font-medium">Importar de CSV:</p>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>O arquivo CSV deve conter as seguintes colunas (opcionais):</p>
-              <p className="text-xs font-mono bg-background p-2 rounded">
-                nome (ou nome_colaborador), loja (ou nome_loja), rg, cpf, data_emissao (ou data_carta), funcao (ou cargo), empresa, email, telefone, departamento
-              </p>
+        {step === 1 ? (
+          <>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="csv-file">Selecione o arquivo CSV</Label>
+                <Input
+                  ref={fileInputRef}
+                  id="csv-file"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              {selectedFile && csvColumns.length > 0 && (
+                <>
+                  <div className="space-y-3">
+                    <Label>Selecione as colunas que deseja importar:</Label>
+                    <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 rounded-lg border bg-muted/30">
+                      {csvColumns.map((column) => (
+                        <div key={column} className="flex items-center gap-2">
+                          <Checkbox
+                            id={column}
+                            checked={selectedColumns.includes(column)}
+                            onCheckedChange={() => handleColumnToggle(column)}
+                          />
+                          <label
+                            htmlFor={column}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {column}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedColumns.length} de {csvColumns.length} colunas selecionadas
+                    </p>
+                  </div>
+
+                  {csvData.length > 0 && (
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-sm font-medium mb-2">Preview (primeiras 5 linhas):</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b">
+                              {selectedColumns.map((col) => (
+                                <th key={col} className="text-left p-2 font-medium">
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {csvData.slice(0, 5).map((row: any, idx) => (
+                              <tr key={idx} className="border-b">
+                                {selectedColumns.map((col) => (
+                                  <td key={col} className="p-2">{row[col]}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleNextStep}
+                    disabled={selectedColumns.length === 0}
+                    className="w-full bg-gradient-to-r from-primary to-accent"
+                  >
+                    Próximo: Mapear Colunas
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
-          </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-muted/50">
+                <p className="text-sm font-medium mb-3">Mapeie cada coluna do CSV para um campo do sistema:</p>
+                <div className="space-y-3">
+                  {Object.entries(FIELD_MAPPING).map(([dbField, label]) => (
+                    <div key={dbField} className="grid grid-cols-2 gap-3 items-center">
+                      <Label className="text-sm">{label}:</Label>
+                      <Select
+                        value={columnMapping[dbField] || "ignore"}
+                        onValueChange={(value) =>
+                          setColumnMapping(prev => ({ ...prev, [dbField]: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Ignorar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ignore">Ignorar campo</SelectItem>
+                          {selectedColumns.map((col) => (
+                            <SelectItem key={col} value={col}>
+                              {col}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="csv-file">Selecione o arquivo CSV</Label>
-            <Input
-              ref={fileInputRef}
-              id="csv-file"
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="cursor-pointer"
-            />
-            {selectedFile && (
-              <p className="text-sm text-muted-foreground">
-                Arquivo selecionado: {selectedFile.name}
-              </p>
-            )}
-          </div>
-
-          <Button
-            onClick={handleCsvImport}
-            disabled={!selectedFile || importFromCsv.isPending}
-            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
-          >
-            {importFromCsv.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importando CSV...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Importar CSV
-              </>
-            )}
-          </Button>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Ou</span>
-          </div>
-        </div>
-
-        {/* External Supabase Import Section */}
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-            <p className="text-sm font-medium">Importar do Supabase Externo:</p>
-            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Busca todos os funcionários da sua base externa</li>
-              <li>Importa para o banco de dados local</li>
-              <li>Mantém todos os dados (nome, cargo, departamento, etc.)</li>
-              <li>Gera novos IDs para evitar conflitos</li>
-            </ol>
-          </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={() => importFromCsv.mutate()}
+                  disabled={!columnMapping.name || importFromCsv.isPending}
+                  className="flex-1 bg-gradient-to-r from-primary to-accent"
+                >
+                  {importFromCsv.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Importando...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Importar Funcionários
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
 
         {importResult && (
           <Alert variant={importResult.success ? "default" : "destructive"}>
@@ -251,40 +370,9 @@ export const EmployeeImport = () => {
             </AlertTitle>
             <AlertDescription>
               {importResult.message || importResult.error}
-              {importResult.errors && importResult.errors.length > 0 && (
-                <div className="mt-2">
-                  <p className="font-semibold">Erros:</p>
-                  <ul className="list-disc list-inside">
-                    {importResult.errors.map((err: any, idx: number) => (
-                      <li key={idx} className="text-xs">
-                        {err.employee}: {err.error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </AlertDescription>
           </Alert>
         )}
-
-          <Button
-            onClick={() => importEmployees.mutate()}
-            disabled={importEmployees.isPending}
-            className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-all duration-200"
-          >
-            {importEmployees.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importando do Supabase...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Importar do Supabase Externo
-              </>
-            )}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

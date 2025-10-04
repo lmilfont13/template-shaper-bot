@@ -1,8 +1,5 @@
 project_id = "mmdyawqhzytscgcoiicr"
 
-[functions.import-employees]
-verify_jwt = false
-
 [functions.generate-pdf]
 verify_jwt = true
 
