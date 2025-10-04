@@ -1,15 +1,84 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, Loader2, CheckCircle2, AlertCircle, Upload } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Papa from "papaparse";
 
 export const EmployeeImport = () => {
   const [importResult, setImportResult] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const importFromCsv = useMutation({
+    mutationFn: async (file: File) => {
+      return new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async (results) => {
+            try {
+              const employees = results.data.map((row: any) => ({
+                name: row.nome || row.name || row.Nome || "",
+                email: row.email || row.Email || "",
+                phone: row.telefone || row.phone || row.Telefone || "",
+                position: row.cargo || row.position || row.Cargo || "",
+                department: row.departamento || row.department || row.Departamento || "",
+                hire_date: row.data_admissao || row.hire_date || row.Data_Admissao || null,
+                salary: row.salario || row.salary || row.Salario || null,
+                address: row.endereco || row.address || row.Endereco || "",
+                city: row.cidade || row.city || row.Cidade || "",
+                state: row.estado || row.state || row.Estado || "",
+                zip_code: row.cep || row.zip_code || row.CEP || "",
+                emergency_contact: row.contato_emergencia || row.emergency_contact || row.Contato_Emergencia || "",
+                emergency_phone: row.telefone_emergencia || row.emergency_phone || row.Telefone_Emergencia || "",
+              }));
+
+              const { data, error } = await supabase
+                .from("employees")
+                .insert(employees)
+                .select();
+
+              if (error) throw error;
+
+              resolve({ success: true, imported: data.length, message: `${data.length} funcionário(s) importado(s) com sucesso` });
+            } catch (error: any) {
+              reject(error);
+            }
+          },
+          error: (error) => {
+            reject(new Error(`Erro ao processar CSV: ${error.message}`));
+          }
+        });
+      });
+    },
+    onSuccess: (data: any) => {
+      setImportResult(data);
+      toast({
+        title: "Importação concluída!",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao importar CSV",
+        description: error.message,
+        variant: "destructive",
+      });
+      setImportResult({ success: false, error: error.message });
+    },
+  });
 
   const importEmployees = useMutation({
     mutationFn: async () => {
@@ -47,31 +116,117 @@ export const EmployeeImport = () => {
     },
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.type !== "text/csv" && !file.name.endsWith('.csv')) {
+        toast({
+          title: "Formato inválido",
+          description: "Por favor, selecione um arquivo CSV",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleCsvImport = () => {
+    if (!selectedFile) {
+      toast({
+        title: "Arquivo não selecionado",
+        description: "Por favor, selecione um arquivo CSV",
+        variant: "destructive",
+      });
+      return;
+    }
+    importFromCsv.mutate(selectedFile);
+  };
+
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-            <Download className="h-6 w-6 text-primary-foreground" />
+            <Upload className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
             <CardTitle>Importar Funcionários</CardTitle>
             <CardDescription>
-              Importar funcionários do seu Supabase externo
+              Importe funcionários de uma planilha CSV ou do Supabase externo
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-          <p className="text-sm font-medium">Como funciona:</p>
-          <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Busca todos os funcionários da sua base externa</li>
-            <li>Importa para o banco de dados local</li>
-            <li>Mantém todos os dados (nome, cargo, departamento, etc.)</li>
-            <li>Gera novos IDs para evitar conflitos</li>
-          </ol>
+      <CardContent className="space-y-6">
+        {/* CSV Import Section */}
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg bg-muted/50 space-y-3">
+            <p className="text-sm font-medium">Importar de CSV:</p>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>O arquivo CSV deve conter as seguintes colunas (opcionais):</p>
+              <p className="text-xs font-mono bg-background p-2 rounded">
+                nome, email, telefone, cargo, departamento, data_admissao, salario, endereco, cidade, estado, cep, contato_emergencia, telefone_emergencia
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="csv-file">Selecione o arquivo CSV</Label>
+            <Input
+              ref={fileInputRef}
+              id="csv-file"
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="cursor-pointer"
+            />
+            {selectedFile && (
+              <p className="text-sm text-muted-foreground">
+                Arquivo selecionado: {selectedFile.name}
+              </p>
+            )}
+          </div>
+
+          <Button
+            onClick={handleCsvImport}
+            disabled={!selectedFile || importFromCsv.isPending}
+            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
+          >
+            {importFromCsv.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Importando CSV...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Importar CSV
+              </>
+            )}
+          </Button>
         </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">Ou</span>
+          </div>
+        </div>
+
+        {/* External Supabase Import Section */}
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+            <p className="text-sm font-medium">Importar do Supabase Externo:</p>
+            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Busca todos os funcionários da sua base externa</li>
+              <li>Importa para o banco de dados local</li>
+              <li>Mantém todos os dados (nome, cargo, departamento, etc.)</li>
+              <li>Gera novos IDs para evitar conflitos</li>
+            </ol>
+          </div>
 
         {importResult && (
           <Alert variant={importResult.success ? "default" : "destructive"}>
@@ -101,23 +256,24 @@ export const EmployeeImport = () => {
           </Alert>
         )}
 
-        <Button
-          onClick={() => importEmployees.mutate()}
-          disabled={importEmployees.isPending}
-          className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
-        >
-          {importEmployees.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Importando...
-            </>
-          ) : (
-            <>
-              <Download className="mr-2 h-4 w-4" />
-              Iniciar Importação
-            </>
-          )}
-        </Button>
+          <Button
+            onClick={() => importEmployees.mutate()}
+            disabled={importEmployees.isPending}
+            className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-all duration-200"
+          >
+            {importEmployees.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Importando do Supabase...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Importar do Supabase Externo
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
