@@ -39,25 +39,39 @@ Deno.serve(async (req) => {
     // Por enquanto, vamos criar um PDF simples com texto
     const pdfBlob = await generatePdfFromHtml(htmlContent);
 
-    // Upload do PDF para o storage
+    // Upload do PDF para o storage - remover acentos e caracteres especiais
     const sanitizedEmployeeName = document.employee_name
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove caracteres especiais
+      .replace(/\s+/g, '_') // Substitui espaços por _
+      .replace(/_+/g, '_') // Remove _ duplicados
+      .replace(/^_|_$/g, '') // Remove _ no início e fim
+      .substring(0, 50); // Limita tamanho
     
     const sanitizedTemplateName = document.template_name
-      .replace(/[^a-zA-Z0-9]/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .replace(/\s+/g, '_')
       .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
+      .replace(/^_|_$/g, '')
+      .substring(0, 30);
     
-    const fileName = `${sanitizedEmployeeName}_${sanitizedTemplateName}_${Date.now()}.pdf`;
-    const filePath = `documents/${fileName}`;
+    // Se o nome ficar vazio, usar um fallback
+    const finalEmployeeName = sanitizedEmployeeName || 'funcionario';
+    const finalTemplateName = sanitizedTemplateName || 'documento';
+    
+    const fileName = `${finalEmployeeName}_${finalTemplateName}_${Date.now()}.pdf`;
+    const filePath = `${fileName}`; // Não usar subpasta 'documents/' se não existir
 
+    console.log('Uploading to:', filePath);
+    
     const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, pdfBlob, {
         contentType: 'application/pdf',
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
