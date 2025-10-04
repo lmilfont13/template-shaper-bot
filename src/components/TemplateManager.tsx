@@ -21,6 +21,7 @@ import { Plus, Settings, Trash2, FileText } from "lucide-react";
 
 export const TemplateManager = () => {
   const [open, setOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [templateContent, setTemplateContent] = useState("");
@@ -40,25 +41,40 @@ export const TemplateManager = () => {
     },
   });
 
-  const createTemplate = useMutation({
+  const saveTemplate = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("document_templates").insert({
-        name,
-        type,
-        template_content: templateContent,
-        description,
-        google_doc_id: "", // Mantém por compatibilidade mas não é mais necessário
-      });
-
-      if (error) throw error;
+      if (editingTemplate) {
+        const { error } = await supabase
+          .from("document_templates")
+          .update({
+            name,
+            type,
+            template_content: templateContent,
+            description,
+          })
+          .eq("id", editingTemplate.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("document_templates").insert({
+          name,
+          type,
+          template_content: templateContent,
+          description,
+          google_doc_id: "",
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast({
-        title: "Template criado!",
-        description: "O template foi cadastrado com sucesso.",
+        title: editingTemplate ? "Template atualizado!" : "Template criado!",
+        description: editingTemplate 
+          ? "O template foi atualizado com sucesso." 
+          : "O template foi cadastrado com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["document-templates"] });
       setOpen(false);
+      setEditingTemplate(null);
       setName("");
       setType("");
       setTemplateContent("");
@@ -66,7 +82,7 @@ export const TemplateManager = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erro ao criar template",
+        title: editingTemplate ? "Erro ao atualizar template" : "Erro ao criar template",
         description: error.message,
         variant: "destructive",
       });
@@ -106,7 +122,16 @@ export const TemplateManager = () => {
               </CardDescription>
             </div>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(isOpen) => {
+            setOpen(isOpen);
+            if (!isOpen) {
+              setEditingTemplate(null);
+              setName("");
+              setType("");
+              setTemplateContent("");
+              setDescription("");
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-primary to-accent">
                 <Plus className="h-4 w-4 mr-2" />
@@ -115,7 +140,7 @@ export const TemplateManager = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Adicionar Template</DialogTitle>
+                <DialogTitle>{editingTemplate ? "Editar Template" : "Adicionar Template"}</DialogTitle>
                 <DialogDescription>
                   Escreva o conteúdo do template usando placeholders como {"`{{nome}}`"}, {"`{{cargo}}`"}, etc.
                 </DialogDescription>
@@ -164,11 +189,11 @@ export const TemplateManager = () => {
               </div>
               <DialogFooter>
                 <Button
-                  onClick={() => createTemplate.mutate()}
-                  disabled={!name || !type || !templateContent || createTemplate.isPending}
+                  onClick={() => saveTemplate.mutate()}
+                  disabled={!name || !type || !templateContent || saveTemplate.isPending}
                   className="bg-gradient-to-r from-primary to-accent"
                 >
-                  Salvar Template
+                  {editingTemplate ? "Atualizar Template" : "Salvar Template"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -209,14 +234,31 @@ export const TemplateManager = () => {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteTemplate.mutate(template.id)}
-                    className="hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingTemplate(template);
+                        setName(template.name);
+                        setType(template.type);
+                        setTemplateContent(template.template_content || "");
+                        setDescription(template.description || "");
+                        setOpen(true);
+                      }}
+                      className="hover:bg-primary/10 hover:text-primary"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteTemplate.mutate(template.id)}
+                      className="hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

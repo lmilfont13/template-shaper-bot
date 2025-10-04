@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, Search, Download, Calendar, FileText, Loader2 } from "lucide-react";
+import { History, Search, Download, Calendar, FileText, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const handleDownload = async (doc: any) => {
     try {
@@ -83,6 +84,24 @@ export const DocumentHistory = () => {
     },
   });
 
+  const deleteDocument = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("generated_documents")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Documento removido",
+        description: "O documento foi excluído do histórico.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
+    },
+  });
+
   const filteredDocuments = documents?.filter((doc) =>
     doc.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.template_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -144,25 +163,35 @@ export const DocumentHistory = () => {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    onClick={() => handleDownload(doc)}
-                    disabled={downloadingId === doc.id}
-                  >
-                    {downloadingId === doc.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Gerando...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download PDF
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                      onClick={() => handleDownload(doc)}
+                      disabled={downloadingId === doc.id}
+                    >
+                      {downloadingId === doc.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteDocument.mutate(doc.id)}
+                      className="hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
