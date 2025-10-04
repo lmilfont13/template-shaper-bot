@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Users, Loader2, Trash2 } from "lucide-react";
+import { Users, Loader2, Trash2, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,6 +20,7 @@ import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
 import { LogoUpload } from "./LogoUpload";
 
 export const EmployeeManager = () => {
+  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [storeName, setStoreName] = useState("");
   const [rg, setRg] = useState("");
@@ -46,55 +47,92 @@ export const EmployeeManager = () => {
     },
   });
 
-  const createEmployee = useMutation({
+  const saveEmployee = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .insert({
-          name,
-          store_name: storeName,
-          rg,
-          cpf,
-          letter_issue_date: letterIssueDate || null,
-          position,
-          company,
-          company_logo_url: companyLogoUrl || null,
-          email,
-          phone,
-          department,
-        })
-        .select()
-        .single();
+      const employeeData = {
+        name,
+        store_name: storeName,
+        rg,
+        cpf,
+        letter_issue_date: letterIssueDate || null,
+        position,
+        company,
+        company_logo_url: companyLogoUrl || null,
+        email,
+        phone,
+        department,
+      };
 
-      if (error) throw error;
-      return data;
+      if (editingEmployee) {
+        const { data, error } = await supabase
+          .from("employees")
+          .update(employeeData)
+          .eq("id", editingEmployee)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from("employees")
+          .insert(employeeData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       toast({
-        title: "Funcionário cadastrado!",
-        description: "O funcionário foi adicionado com sucesso.",
+        title: editingEmployee ? "Funcionário atualizado!" : "Funcionário cadastrado!",
+        description: editingEmployee 
+          ? "O funcionário foi atualizado com sucesso."
+          : "O funcionário foi adicionado com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      setName("");
-      setStoreName("");
-      setRg("");
-      setCpf("");
-      setLetterIssueDate("");
-      setPosition("");
-      setCompany("");
-      setCompanyLogoUrl("");
-      setEmail("");
-      setPhone("");
-      setDepartment("");
+      clearForm();
     },
     onError: (error) => {
       toast({
-        title: "Erro ao cadastrar funcionário",
+        title: editingEmployee ? "Erro ao atualizar funcionário" : "Erro ao cadastrar funcionário",
         description: error.message,
         variant: "destructive",
       });
     },
   });
+
+  const clearForm = () => {
+    setEditingEmployee(null);
+    setName("");
+    setStoreName("");
+    setRg("");
+    setCpf("");
+    setLetterIssueDate("");
+    setPosition("");
+    setCompany("");
+    setCompanyLogoUrl("");
+    setEmail("");
+    setPhone("");
+    setDepartment("");
+  };
+
+  const handleEdit = (employee: any) => {
+    setEditingEmployee(employee.id);
+    setName(employee.name || "");
+    setStoreName(employee.store_name || "");
+    setRg(employee.rg || "");
+    setCpf(employee.cpf || "");
+    setLetterIssueDate(employee.letter_issue_date || "");
+    setPosition(employee.position || "");
+    setCompany(employee.company || "");
+    setCompanyLogoUrl(employee.company_logo_url || "");
+    setEmail(employee.email || "");
+    setPhone(employee.phone || "");
+    setDepartment(employee.department || "");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
@@ -121,7 +159,7 @@ export const EmployeeManager = () => {
     },
   });
 
-  const handleCreate = () => {
+  const handleSave = () => {
     if (!name.trim()) {
       toast({
         title: "Nome obrigatório",
@@ -131,7 +169,7 @@ export const EmployeeManager = () => {
       return;
     }
 
-    createEmployee.mutate();
+    saveEmployee.mutate();
   };
 
   return (
@@ -146,9 +184,9 @@ export const EmployeeManager = () => {
               <Users className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle>Cadastrar Funcionário</CardTitle>
+              <CardTitle>{editingEmployee ? "Editar Funcionário" : "Cadastrar Funcionário"}</CardTitle>
               <CardDescription>
-                Adicione os dados dos funcionários para usar nos documentos
+                {editingEmployee ? "Atualize os dados do funcionário" : "Adicione os dados dos funcionários para usar nos documentos"}
               </CardDescription>
             </div>
           </div>
@@ -275,20 +313,31 @@ export const EmployeeManager = () => {
             </div>
           </div>
 
-          <Button
-            onClick={handleCreate}
-            disabled={createEmployee.isPending}
-            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
-          >
-            {createEmployee.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cadastrando...
-              </>
-            ) : (
-              "Cadastrar Funcionário"
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={saveEmployee.isPending}
+              className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
+            >
+              {saveEmployee.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {editingEmployee ? "Atualizando..." : "Cadastrando..."}
+                </>
+              ) : (
+                editingEmployee ? "Atualizar Funcionário" : "Cadastrar Funcionário"
+              )}
+            </Button>
+            {editingEmployee && (
+              <Button
+                onClick={clearForm}
+                variant="outline"
+                disabled={saveEmployee.isPending}
+              >
+                Cancelar
+              </Button>
             )}
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -328,14 +377,24 @@ export const EmployeeManager = () => {
                       <TableCell>{employee.position || "-"}</TableCell>
                       <TableCell>{employee.company || "-"}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteEmployee.mutate(employee.id)}
-                          disabled={deleteEmployee.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(employee)}
+                            disabled={deleteEmployee.isPending}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteEmployee.mutate(employee.id)}
+                            disabled={deleteEmployee.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
