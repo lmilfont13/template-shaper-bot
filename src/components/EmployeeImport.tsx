@@ -26,10 +26,15 @@ export const EmployeeImport = () => {
             try {
               const employees = results.data
                 .map((row: any) => ({
-                  name: row.nome || row.name || row.Nome || "",
+                  name: row.nome || row.name || row.Nome || row.nome_colaborador || "",
+                  store_name: row.loja || row.store_name || row.nome_loja || "",
+                  rg: row.rg || row.RG || "",
+                  cpf: row.cpf || row.CPF || "",
+                  letter_issue_date: row.data_emissao || row.letter_issue_date || row.data_carta || null,
+                  position: row.funcao || row.cargo || row.position || row.Cargo || "",
+                  company: row.empresa || row.company || row.Empresa || "",
                   email: row.email || row.Email || "",
                   phone: row.telefone || row.phone || row.Telefone || "",
-                  position: row.cargo || row.position || row.Cargo || "",
                   department: row.departamento || row.department || row.Departamento || "",
                   hire_date: row.data_admissao || row.hire_date || row.Data_Admissao || null,
                   salary: row.salario || row.salary || row.Salario || null,
@@ -172,7 +177,7 @@ export const EmployeeImport = () => {
             <div className="text-sm text-muted-foreground space-y-1">
               <p>O arquivo CSV deve conter as seguintes colunas (opcionais):</p>
               <p className="text-xs font-mono bg-background p-2 rounded">
-                nome, email, telefone, cargo, departamento, data_admissao, salario, endereco, cidade, estado, cep, contato_emergencia, telefone_emergencia
+                nome (ou nome_colaborador), loja (ou nome_loja), rg, cpf, data_emissao (ou data_carta), funcao (ou cargo), empresa, email, telefone, departamento
               </p>
             </div>
           </div>

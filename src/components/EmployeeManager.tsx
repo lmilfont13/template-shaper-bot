@@ -20,9 +20,14 @@ import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
 
 export const EmployeeManager = () => {
   const [name, setName] = useState("");
+  const [storeName, setStoreName] = useState("");
+  const [rg, setRg] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [letterIssueDate, setLetterIssueDate] = useState("");
+  const [position, setPosition] = useState("");
+  const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [position, setPosition] = useState("");
   const [department, setDepartment] = useState("");
   const queryClient = useQueryClient();
 
@@ -45,9 +50,14 @@ export const EmployeeManager = () => {
         .from("employees")
         .insert({
           name,
+          store_name: storeName,
+          rg,
+          cpf,
+          letter_issue_date: letterIssueDate || null,
+          position,
+          company,
           email,
           phone,
-          position,
           department,
         })
         .select()
@@ -63,9 +73,14 @@ export const EmployeeManager = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       setName("");
+      setStoreName("");
+      setRg("");
+      setCpf("");
+      setLetterIssueDate("");
+      setPosition("");
+      setCompany("");
       setEmail("");
       setPhone("");
-      setPosition("");
       setDepartment("");
     },
     onError: (error) => {
@@ -137,12 +152,78 @@ export const EmployeeManager = () => {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo*</Label>
+              <Label htmlFor="name">Nome do Colaborador*</Label>
               <Input
                 id="name"
-                placeholder="Nome do funcionário"
+                placeholder="Nome completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="store-name">Nome da Loja</Label>
+              <Input
+                id="store-name"
+                placeholder="Ex: Loja Centro"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rg">RG</Label>
+              <Input
+                id="rg"
+                placeholder="00.000.000-0"
+                value={rg}
+                onChange={(e) => setRg(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                placeholder="000.000.000-00"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="letter-date">Data de Emissão da Carta</Label>
+              <Input
+                id="letter-date"
+                type="date"
+                value={letterIssueDate}
+                onChange={(e) => setLetterIssueDate(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position">Função</Label>
+              <Input
+                id="position"
+                placeholder="Ex: Vendedor"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company">Empresa</Label>
+              <Input
+                id="company"
+                placeholder="Nome da empresa"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
                 className="transition-all duration-200"
               />
             </div>
@@ -171,21 +252,10 @@ export const EmployeeManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Cargo</Label>
-              <Input
-                id="position"
-                placeholder="Ex: Analista de RH"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="department">Departamento</Label>
               <Input
                 id="department"
-                placeholder="Ex: Recursos Humanos"
+                placeholder="Ex: Vendas"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="transition-all duration-200"
@@ -228,10 +298,11 @@ export const EmployeeManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Cargo</TableHead>
-                    <TableHead>Departamento</TableHead>
+                    <TableHead>Loja</TableHead>
+                    <TableHead>RG</TableHead>
+                    <TableHead>CPF</TableHead>
+                    <TableHead>Função</TableHead>
+                    <TableHead>Empresa</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -239,10 +310,11 @@ export const EmployeeManager = () => {
                   {employees.map((employee) => (
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.email || "-"}</TableCell>
-                      <TableCell>{employee.phone || "-"}</TableCell>
+                      <TableCell>{employee.store_name || "-"}</TableCell>
+                      <TableCell>{employee.rg || "-"}</TableCell>
+                      <TableCell>{employee.cpf || "-"}</TableCell>
                       <TableCell>{employee.position || "-"}</TableCell>
-                      <TableCell>{employee.department || "-"}</TableCell>
+                      <TableCell>{employee.company || "-"}</TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"

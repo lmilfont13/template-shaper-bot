@@ -52,6 +52,8 @@ export type Database = {
           additional_data: Json | null
           address: string | null
           city: string | null
+          company: string | null
+          cpf: string | null
           created_at: string
           department: string | null
           email: string | null
@@ -59,11 +61,14 @@ export type Database = {
           emergency_phone: string | null
           hire_date: string | null
           id: string
+          letter_issue_date: string | null
           name: string
           phone: string | null
           position: string | null
+          rg: string | null
           salary: number | null
           state: string | null
+          store_name: string | null
           updated_at: string
           zip_code: string | null
         }
@@ -71,6 +76,8 @@ export type Database = {
           additional_data?: Json | null
           address?: string | null
           city?: string | null
+          company?: string | null
+          cpf?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -78,11 +85,14 @@ export type Database = {
           emergency_phone?: string | null
           hire_date?: string | null
           id?: string
+          letter_issue_date?: string | null
           name: string
           phone?: string | null
           position?: string | null
+          rg?: string | null
           salary?: number | null
           state?: string | null
+          store_name?: string | null
           updated_at?: string
           zip_code?: string | null
         }
@@ -90,6 +100,8 @@ export type Database = {
           additional_data?: Json | null
           address?: string | null
           city?: string | null
+          company?: string | null
+          cpf?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -97,11 +109,14 @@ export type Database = {
           emergency_phone?: string | null
           hire_date?: string | null
           id?: string
+          letter_issue_date?: string | null
           name?: string
           phone?: string | null
           position?: string | null
+          rg?: string | null
           salary?: number | null
           state?: string | null
+          store_name?: string | null
           updated_at?: string
           zip_code?: string | null
         }
