@@ -38,14 +38,46 @@ export const DocumentGenerator = () => {
       const template = templates?.find((t) => t.id === selectedTemplate);
       if (!template) throw new Error("Template não encontrado");
 
+      // Buscar funcionário pelo nome
+      const { data: employee, error: employeeError } = await supabase
+        .from("employees")
+        .select("*")
+        .ilike("name", employeeName.trim())
+        .maybeSingle();
+
+      if (employeeError) throw employeeError;
+      
+      if (!employee) {
+        throw new Error("Funcionário não encontrado. Cadastre-o primeiro na base de dados.");
+      }
+
+      // Preparar dados para substituição no template
+      const additionalData = (employee.additional_data || {}) as Record<string, any>;
+      const templateData: Record<string, any> = {
+        nome: employee.name,
+        email: employee.email || "",
+        telefone: employee.phone || "",
+        cargo: employee.position || "",
+        departamento: employee.department || "",
+        data_admissao: employee.hire_date || "",
+        salario: employee.salary || "",
+        endereco: employee.address || "",
+        cidade: employee.city || "",
+        estado: employee.state || "",
+        cep: employee.zip_code || "",
+        contato_emergencia: employee.emergency_contact || "",
+        telefone_emergencia: employee.emergency_phone || "",
+        ...additionalData,
+      };
+
       const { data, error } = await supabase
         .from("generated_documents")
         .insert({
-          employee_name: employeeName,
+          employee_name: employee.name,
           template_id: selectedTemplate,
           template_name: template.name,
           status: "completed",
-          data: { employee_name: employeeName },
+          data: templateData,
         })
         .select()
         .single();

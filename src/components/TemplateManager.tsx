@@ -25,6 +25,7 @@ export const TemplateManager = () => {
   const [type, setType] = useState("");
   const [googleDocId, setGoogleDocId] = useState("");
   const [description, setDescription] = useState("");
+  const [fields, setFields] = useState("");
   const queryClient = useQueryClient();
 
   const { data: templates, isLoading } = useQuery({
@@ -42,11 +43,14 @@ export const TemplateManager = () => {
 
   const createTemplate = useMutation({
     mutationFn: async () => {
+      const parsedFields = fields.trim() ? fields.split(',').map(f => f.trim()) : [];
+      
       const { error } = await supabase.from("document_templates").insert({
         name,
         type,
         google_doc_id: googleDocId,
         description,
+        fields: parsedFields,
       });
 
       if (error) throw error;
@@ -62,6 +66,7 @@ export const TemplateManager = () => {
       setType("");
       setGoogleDocId("");
       setDescription("");
+      setFields("");
     },
     onError: (error) => {
       toast({
@@ -149,12 +154,27 @@ export const TemplateManager = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Descrição (opcional)</Label>
-                  <Textarea
+                  <Input
                     id="description"
-                    placeholder="Descrição do template"
+                    placeholder="Breve descrição do template"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    className="transition-all duration-200"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fields">Campos Dinâmicos</Label>
+                  <Textarea
+                    id="fields"
+                    placeholder="nome, cargo, departamento, data_admissao, salario, endereco..."
+                    value={fields}
+                    onChange={(e) => setFields(e.target.value)}
+                    className="transition-all duration-200 min-h-[80px]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Separe os campos por vírgula. Estes são os dados que serão substituídos no template do Google Docs usando a sintaxe {`{{campo}}`}
+                  </p>
                 </div>
               </div>
               <DialogFooter>

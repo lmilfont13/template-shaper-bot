@@ -1,6 +1,7 @@
 import { DocumentGenerator } from "@/components/DocumentGenerator";
 import { DocumentHistory } from "@/components/DocumentHistory";
 import { TemplateManager } from "@/components/TemplateManager";
+import { EmployeeManager } from "@/components/EmployeeManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText } from "lucide-react";
 
@@ -25,12 +26,15 @@ const Index = () => {
         </header>
 
         <Tabs defaultValue="generate" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
             <TabsTrigger value="generate" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Gerar
             </TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Histórico
+            </TabsTrigger>
+            <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
+              Funcionários
             </TabsTrigger>
             <TabsTrigger value="templates" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Templates
@@ -78,6 +82,10 @@ const Index = () => {
 
           <TabsContent value="history">
             <DocumentHistory />
+          </TabsContent>
+
+          <TabsContent value="employees">
+            <EmployeeManager />
           </TabsContent>
 
           <TabsContent value="templates">

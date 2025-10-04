@@ -47,6 +47,66 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          additional_data: Json | null
+          address: string | null
+          city: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          emergency_contact: string | null
+          emergency_phone: string | null
+          hire_date: string | null
+          id: string
+          name: string
+          phone: string | null
+          position: string | null
+          salary: number | null
+          state: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          additional_data?: Json | null
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          hire_date?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          additional_data?: Json | null
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          hire_date?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       generated_documents: {
         Row: {
           created_at: string
