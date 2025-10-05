@@ -51,11 +51,8 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Sistema de Documentos
+                  Sistema de Documentos Target
                 </h1>
-                <p className="text-muted-foreground mt-1">
-                  Geração automatizada de documentos via Google Docs
-                </p>
               </div>
             </div>
             <Button variant="outline" onClick={handleLogout}>
