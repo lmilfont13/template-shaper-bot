@@ -10,7 +10,7 @@ interface TemplateDocumentData {
   created_at: string;
 }
 
-export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promise<void> => {
+export const generatePDFFromTemplate = async (data: TemplateDocumentData, returnBlob: boolean = false): Promise<void | Blob> => {
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -138,7 +138,12 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
     pageHeight - 5
   );
 
-  // Fazer download
+  // Retornar blob ou fazer download
   const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
-  pdf.save(fileName);
+  
+  if (returnBlob) {
+    return pdf.output('blob');
+  } else {
+    pdf.save(fileName);
+  }
 };

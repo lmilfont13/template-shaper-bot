@@ -61,23 +61,75 @@ export const DocumentHistory = () => {
     }
   };
 
-  const handleWhatsAppShare = (doc: any) => {
-    const message = `📄 *Documento Gerado - Sistema Tarhget*\n\n` +
-      `👤 Funcionário: ${doc.employee_name}\n` +
-      `📋 Tipo: ${doc.template_name}\n` +
-      `🏢 Coligada: ${doc.coligada_name || 'N/A'}\n` +
-      `📅 Data: ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}\n\n` +
-      `_Documento gerado pelo Sistema de Documentos Tarhget_`;
-    
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-    
-    toast({
-      title: "WhatsApp aberto!",
-      description: "Compartilhe o documento com seus contatos.",
-    });
+  const handleWhatsAppShare = async (doc: any) => {
+    try {
+      setDownloadingId(doc.id);
+
+      // Buscar coligada para pegar as imagens
+      let coligadaData = null;
+      if (doc.coligada_id) {
+        const { data: coligada } = await supabase
+          .from('coligadas')
+          .select('company_logo_url, signature_url, stamp_url')
+          .eq('id', doc.coligada_id)
+          .maybeSingle();
+        coligadaData = coligada;
+      }
+
+      const processedText = doc.data?.processedText || '';
+
+      // Gerar PDF como Blob
+      const pdfBlob = await generatePDFFromTemplate({
+        employee_name: doc.employee_name,
+        template_name: doc.template_name,
+        processedText: processedText,
+        company_logo_url: coligadaData?.company_logo_url || doc.data?.company_logo_url,
+        signature_url: coligadaData?.signature_url || doc.data?.signature_url,
+        stamp_url: coligadaData?.stamp_url || doc.data?.stamp_url,
+        created_at: doc.created_at,
+      }, true) as Blob;
+
+      const fileName = `${doc.employee_name.replace(/\s+/g, '_')}_${doc.template_name.replace(/\s+/g, '_')}.pdf`;
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      // Verificar se o navegador suporta Web Share API
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Documento Tarhget',
+          text: `Documento de ${doc.employee_name} - ${doc.template_name}`,
+          files: [file]
+        });
+
+        toast({
+          title: "Compartilhamento iniciado!",
+          description: "Escolha o WhatsApp para compartilhar o documento.",
+        });
+      } else {
+        // Fallback: fazer download do arquivo
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Download iniciado!",
+          description: "Compartilhe o arquivo manualmente pelo WhatsApp.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao compartilhar:', error);
+      toast({
+        title: "Erro ao compartilhar",
+        description: error.message || "Não foi possível compartilhar o documento.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const { data: documents, isLoading } = useQuery({
@@ -203,9 +255,19 @@ export const DocumentHistory = () => {
                       size="sm"
                       className="group-hover:bg-green-600 group-hover:text-white transition-colors"
                       onClick={() => handleWhatsAppShare(doc)}
+                      disabled={downloadingId === doc.id}
                     >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      WhatsApp
+                      {downloadingId === doc.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="h-4 w-4 mr-2" />
+                          WhatsApp
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
