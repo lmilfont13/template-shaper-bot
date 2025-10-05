@@ -28,6 +28,7 @@ export const DocumentGenerator = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedColigadaId, setSelectedColigadaId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const queryClient = useQueryClient();
@@ -92,8 +93,8 @@ export const DocumentGenerator = () => {
       const templateData: Record<string, any> = {
         nome: employee.name,
         nome_colaborador: employee.name,
-        loja: employee.store_name || "",
-        nome_loja: employee.store_name || "",
+        loja: storeName || employee.store_name || "",
+        nome_loja: storeName || employee.store_name || "",
         rg: employee.rg || "",
         cpf: employee.cpf || "",
         data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
@@ -164,6 +165,7 @@ export const DocumentGenerator = () => {
       setSelectedEmployeeId("");
       setSelectedColigadaId("");
       setSelectedTemplate("");
+      setStoreName("");
     },
     onError: (error) => {
       toast({
@@ -243,8 +245,8 @@ export const DocumentGenerator = () => {
     const templateData: Record<string, any> = {
       nome: employee.name,
       nome_colaborador: employee.name,
-      loja: employee.store_name || "",
-      nome_loja: employee.store_name || "",
+      loja: storeName || employee.store_name || "",
+      nome_loja: storeName || employee.store_name || "",
       rg: employee.rg || "",
       cpf: employee.cpf || "",
       data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
@@ -415,6 +417,18 @@ export const DocumentGenerator = () => {
               )}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="store-name">Nome da Loja</Label>
+          <Input
+            id="store-name"
+            type="text"
+            placeholder="Digite o nome da loja"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            className="transition-all duration-200"
+          />
         </div>
 
         <Button
