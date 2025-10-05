@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      coligadas: {
+        Row: {
+          company_logo_url: string | null
+          created_at: string
+          id: string
+          nome: string
+          signature_url: string | null
+          stamp_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_logo_url?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          signature_url?: string | null
+          stamp_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_logo_url?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          signature_url?: string | null
+          stamp_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_templates: {
         Row: {
           created_at: string
@@ -136,6 +166,8 @@ export type Database = {
       }
       generated_documents: {
         Row: {
+          coligada_id: string | null
+          coligada_name: string | null
           created_at: string
           data: Json | null
           employee_name: string
@@ -147,6 +179,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          coligada_id?: string | null
+          coligada_name?: string | null
           created_at?: string
           data?: Json | null
           employee_name: string
@@ -158,6 +192,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          coligada_id?: string | null
+          coligada_name?: string | null
           created_at?: string
           data?: Json | null
           employee_name?: string
@@ -169,6 +205,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "generated_documents_coligada_id_fkey"
+            columns: ["coligada_id"]
+            isOneToOne: false
+            referencedRelation: "coligadas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "generated_documents_template_id_fkey"
             columns: ["template_id"]

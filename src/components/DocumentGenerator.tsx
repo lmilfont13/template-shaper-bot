@@ -26,6 +26,7 @@ import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 
 export const DocumentGenerator = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedColigadaId, setSelectedColigadaId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
@@ -57,6 +58,19 @@ export const DocumentGenerator = () => {
     },
   });
 
+  const { data: coligadas, isLoading: loadingColigadas } = useQuery({
+    queryKey: ["coligadas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coligadas")
+        .select("*")
+        .order("nome");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const generateDocument = useMutation({
     mutationFn: async () => {
       const template = templates?.find((t) => t.id === selectedTemplate);
@@ -66,6 +80,12 @@ export const DocumentGenerator = () => {
       
       if (!employee) {
         throw new Error("Funcionário não encontrado. Selecione um funcionário da lista.");
+      }
+
+      const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
+      
+      if (!coligada) {
+        throw new Error("Coligada não encontrada. Selecione uma coligada da lista.");
       }
 
       // Preparar dados para substituição
@@ -115,13 +135,15 @@ export const DocumentGenerator = () => {
           employee_name: employee.name,
           template_id: selectedTemplate,
           template_name: template.name,
+          coligada_id: selectedColigadaId,
+          coligada_name: coligada.nome,
           status: "completed",
           data: { 
             ...templateData, 
             processedText,
-            company_logo_url: employee.company_logo_url || undefined,
-            signature_url: employee.signature_url || undefined,
-            stamp_url: employee.stamp_url || undefined,
+            company_logo_url: coligada.company_logo_url || undefined,
+            signature_url: coligada.signature_url || undefined,
+            stamp_url: coligada.stamp_url || undefined,
             created_at: new Date().toISOString(),
           },
           user_id: user.id,
@@ -140,6 +162,7 @@ export const DocumentGenerator = () => {
       });
       queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
       setSelectedEmployeeId("");
+      setSelectedColigadaId("");
       setSelectedTemplate("");
     },
     onError: (error) => {
@@ -156,6 +179,15 @@ export const DocumentGenerator = () => {
       toast({
         title: "Funcionário obrigatório",
         description: "Por favor, selecione um funcionário.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedColigadaId) {
+      toast({
+        title: "Coligada obrigatória",
+        description: "Por favor, selecione uma coligada.",
         variant: "destructive",
       });
       return;
@@ -183,6 +215,15 @@ export const DocumentGenerator = () => {
       return;
     }
 
+    if (!selectedColigadaId) {
+      toast({
+        title: "Coligada obrigatória",
+        description: "Por favor, selecione uma coligada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedTemplate) {
       toast({
         title: "Template obrigatório",
@@ -194,8 +235,9 @@ export const DocumentGenerator = () => {
 
     const template = templates?.find((t) => t.id === selectedTemplate);
     const employee = employees?.find((e) => e.id === selectedEmployeeId);
+    const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
     
-    if (!template || !employee) return;
+    if (!template || !employee || !coligada) return;
 
     // Preparar dados
     const templateData: Record<string, any> = {
@@ -234,21 +276,22 @@ export const DocumentGenerator = () => {
     }
 
     // Substituir placeholders de imagens para preview
-    if (employee.signature_url && previewText.includes('{{assinatura}}')) {
+    if (coligada.signature_url && previewText.includes('{{assinatura}}')) {
       previewText = previewText.replace(/{{assinatura}}/gi, '[ASSINATURA SERÁ INSERIDA AQUI]');
     }
-    if (employee.stamp_url && previewText.includes('{{carimbo}}')) {
+    if (coligada.stamp_url && previewText.includes('{{carimbo}}')) {
       previewText = previewText.replace(/{{carimbo}}/gi, '[CARIMBO SERÁ INSERIDO AQUI]');
     }
 
     setPreviewData({
       employee_name: employee.name,
+      coligada_name: coligada.nome,
       template_name: template.name,
       processedText: previewText,
       originalProcessedText: processedText,
-      company_logo_url: employee.company_logo_url,
-      signature_url: employee.signature_url,
-      stamp_url: employee.stamp_url,
+      company_logo_url: coligada.company_logo_url,
+      signature_url: coligada.signature_url,
+      stamp_url: coligada.stamp_url,
       created_at: new Date().toISOString(),
     });
     setPreviewOpen(true);
@@ -323,6 +366,32 @@ export const DocumentGenerator = () => {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="coligada-select">Coligada</Label>
+          <Select value={selectedColigadaId} onValueChange={setSelectedColigadaId}>
+            <SelectTrigger id="coligada-select" className="transition-all duration-200">
+              <SelectValue placeholder="Selecione a coligada" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {loadingColigadas ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : coligadas && coligadas.length > 0 ? (
+                coligadas.map((coligada) => (
+                  <SelectItem key={coligada.id} value={coligada.id}>
+                    {coligada.nome}
+                  </SelectItem>
+                ))
+              ) : (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Nenhuma coligada cadastrada
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="template-select">Tipo de Documento</Label>
           <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
             <SelectTrigger id="template-select" className="transition-all duration-200">
@@ -387,6 +456,7 @@ export const DocumentGenerator = () => {
               <div className="border-b pb-2">
                 <p className="text-sm font-semibold">Template: {previewData.template_name}</p>
                 <p className="text-sm text-muted-foreground">Funcionário: {previewData.employee_name}</p>
+                <p className="text-sm text-muted-foreground">Coligada: {previewData.coligada_name}</p>
               </div>
               
               <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">

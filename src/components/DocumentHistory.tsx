@@ -20,12 +20,16 @@ export const DocumentHistory = () => {
     try {
       setDownloadingId(doc.id);
 
-      // Buscar funcionário para pegar logo
-      const { data: employee } = await supabase
-        .from('employees')
-        .select('company_logo_url')
-        .eq('name', doc.employee_name)
-        .maybeSingle();
+      // Buscar coligada para pegar as imagens
+      let coligadaData = null;
+      if (doc.coligada_id) {
+        const { data: coligada } = await supabase
+          .from('coligadas')
+          .select('company_logo_url, signature_url, stamp_url')
+          .eq('id', doc.coligada_id)
+          .maybeSingle();
+        coligadaData = coligada;
+      }
 
       // Usar o texto processado que já está no documento
       const processedText = doc.data?.processedText || '';
@@ -35,7 +39,9 @@ export const DocumentHistory = () => {
         employee_name: doc.employee_name,
         template_name: doc.template_name,
         processedText: processedText,
-        company_logo_url: employee?.company_logo_url,
+        company_logo_url: coligadaData?.company_logo_url || doc.data?.company_logo_url,
+        signature_url: coligadaData?.signature_url || doc.data?.signature_url,
+        stamp_url: coligadaData?.stamp_url || doc.data?.stamp_url,
         created_at: doc.created_at,
       });
       
@@ -64,22 +70,6 @@ export const DocumentHistory = () => {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      
-      // Buscar logos dos funcionários
-      if (data && data.length > 0) {
-        const employeeNames = [...new Set(data.map(d => d.employee_name))];
-        const { data: employeesData } = await supabase
-          .from("employees")
-          .select("name, company_logo_url")
-          .in("name", employeeNames);
-        
-        // Mapear logos para documentos
-        return data.map(doc => ({
-          ...doc,
-          company_logo_url: employeesData?.find(e => e.name === doc.employee_name)?.company_logo_url || null
-        }));
-      }
-      
       return data;
     },
   });
@@ -104,7 +94,8 @@ export const DocumentHistory = () => {
 
   const filteredDocuments = documents?.filter((doc) =>
     doc.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.template_name.toLowerCase().includes(searchTerm.toLowerCase())
+    doc.template_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (doc.coligada_name && doc.coligada_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -149,11 +140,16 @@ export const DocumentHistory = () => {
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-semibold">{doc.employee_name}</h4>
                         <Badge variant="outline" className="text-xs">
                           {doc.template_name}
                         </Badge>
+                        {doc.coligada_name && (
+                          <Badge variant="secondary" className="text-xs">
+                            {doc.coligada_name}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />

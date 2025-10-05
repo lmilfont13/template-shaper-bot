@@ -2,6 +2,7 @@ import { DocumentGenerator } from "@/components/DocumentGenerator";
 import { DocumentHistory } from "@/components/DocumentHistory";
 import { TemplateManager } from "@/components/TemplateManager";
 import { EmployeeManager } from "@/components/EmployeeManager";
+import { ColigadaManager } from "@/components/ColigadaManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -65,13 +66,18 @@ const Index = () => {
         </header>
 
         <Tabs defaultValue="generate" className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4 lg:w-[800px]' : 'grid-cols-2 lg:w-[400px]'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5 lg:w-[1000px]' : 'grid-cols-2 lg:w-[400px]'}`}>
             <TabsTrigger value="generate" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Gerar
             </TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
               Histórico
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="coligadas" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
+                Coligadas
+              </TabsTrigger>
+            )}
             {isAdmin && (
               <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-accent">
                 Funcionários
@@ -126,6 +132,12 @@ const Index = () => {
           <TabsContent value="history">
             <DocumentHistory />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="coligadas">
+              <ColigadaManager />
+            </TabsContent>
+          )}
 
           {isAdmin && (
             <TabsContent value="employees">
