@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/table";
 import { EmployeeImport } from "./EmployeeImport";
 import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
-import { LogoUpload } from "./LogoUpload";
-import { ImageUpload } from "./ImageUpload";
 
 export const EmployeeManager = () => {
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
@@ -29,12 +27,9 @@ export const EmployeeManager = () => {
   const [letterIssueDate, setLetterIssueDate] = useState("");
   const [position, setPosition] = useState("");
   const [company, setCompany] = useState("");
-  const [companyLogoUrl, setCompanyLogoUrl] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [department, setDepartment] = useState("");
-  const [signatureUrl, setSignatureUrl] = useState("");
-  const [stampUrl, setStampUrl] = useState("");
   const queryClient = useQueryClient();
 
   const { data: employees, isLoading } = useQuery({
@@ -60,12 +55,9 @@ export const EmployeeManager = () => {
         letter_issue_date: letterIssueDate || null,
         position,
         company,
-        company_logo_url: companyLogoUrl || null,
         email,
         phone,
         department,
-        signature_url: signatureUrl || null,
-        stamp_url: stampUrl || null,
       };
 
       if (editingEmployee) {
@@ -117,12 +109,9 @@ export const EmployeeManager = () => {
     setLetterIssueDate("");
     setPosition("");
     setCompany("");
-    setCompanyLogoUrl("");
     setEmail("");
     setPhone("");
     setDepartment("");
-    setSignatureUrl("");
-    setStampUrl("");
   };
 
   const handleEdit = (employee: any) => {
@@ -134,12 +123,9 @@ export const EmployeeManager = () => {
     setLetterIssueDate(employee.letter_issue_date || "");
     setPosition(employee.position || "");
     setCompany(employee.company || "");
-    setCompanyLogoUrl(employee.company_logo_url || "");
     setEmail(employee.email || "");
     setPhone(employee.phone || "");
     setDepartment(employee.department || "");
-    setSignatureUrl(employee.signature_url || "");
-    setStampUrl(employee.stamp_url || "");
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -310,36 +296,6 @@ export const EmployeeManager = () => {
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <LogoUpload
-                currentLogoUrl={companyLogoUrl}
-                onLogoUploaded={setCompanyLogoUrl}
-                onLogoRemoved={() => setCompanyLogoUrl("")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <ImageUpload
-                id="signature-upload"
-                label="Assinatura"
-                currentImageUrl={signatureUrl}
-                onImageUploaded={setSignatureUrl}
-                onImageRemoved={() => setSignatureUrl("")}
-                folder="signatures"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <ImageUpload
-                id="stamp-upload"
-                label="Carimbo"
-                currentImageUrl={stampUrl}
-                onImageUploaded={setStampUrl}
-                onImageRemoved={() => setStampUrl("")}
-                folder="stamps"
               />
             </div>
           </div>
