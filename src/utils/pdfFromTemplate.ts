@@ -54,13 +54,10 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   // Ajustar yPosition para começar após a logo
   yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
 
-  // Processar texto dividindo por parágrafos para manter placeholders intactos
+  // Remover placeholders do texto se existirem
   let contentText = data.processedText;
-  const hasSignature = contentText.toLowerCase().includes('{{assinatura}}');
-  const hasStamp = contentText.toLowerCase().includes('{{carimbo}}');
-  
-  console.log('DEBUG PDF - hasSignature:', hasSignature, 'hasStamp:', hasStamp);
-  console.log('DEBUG PDF - contentText:', contentText);
+  contentText = contentText.replace(/\{\{assinatura\}\}/gi, '');
+  contentText = contentText.replace(/\{\{carimbo\}\}/gi, '');
 
   // Conteúdo do documento com formatação de carta
   pdf.setFontSize(10);
@@ -68,47 +65,29 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
 
   const maxWidth = pageWidth - (margin * 2);
   const lineSpacing = 5;
-  let signatureY = 0;
-  let stampY = 0;
   const imageSize = 45; // Tamanho uniforme para ambas as imagens
 
-  // Processar texto parágrafo por parágrafo
-  const paragraphs = contentText.split('\n');
+  // Dividir texto em linhas
+  const lines = pdf.splitTextToSize(contentText.trim(), maxWidth);
   
-  for (const paragraph of paragraphs) {
-    if (yPosition > pageHeight - 60) {
+  for (const line of lines) {
+    if (yPosition > pageHeight - 80) {
       break;
     }
-    
-    // Verificar se é um placeholder
-    if (paragraph.toLowerCase().trim() === '{{assinatura}}') {
-      console.log('DEBUG PDF - Encontrou assinatura na posição:', yPosition);
-      signatureY = yPosition;
-      yPosition += imageSize + 10;
-    } else if (paragraph.toLowerCase().trim() === '{{carimbo}}') {
-      console.log('DEBUG PDF - Encontrou carimbo na posição:', yPosition);
-      stampY = yPosition;
-      yPosition += imageSize + 10;
-    } else if (paragraph.trim()) {
-      // Dividir o parágrafo em linhas que cabem na página
-      const lines = pdf.splitTextToSize(paragraph, maxWidth);
-      for (const line of lines) {
-        if (yPosition > pageHeight - 60) {
-          break;
-        }
-        pdf.text(line, margin, yPosition);
-        yPosition += lineSpacing;
-      }
-    } else {
-      // Linha vazia - adicionar espaçamento
-      yPosition += lineSpacing;
+    if (line.trim()) {
+      pdf.text(line, margin, yPosition);
     }
+    yPosition += lineSpacing;
   }
-  
-  console.log('DEBUG PDF - signatureY:', signatureY, 'stampY:', stampY);
 
-  // Inserir assinatura na posição marcada
-  if (data.signature_url && hasSignature && signatureY > 0) {
+  // Adicionar pequeno espaçamento após o texto
+  yPosition += 10;
+
+  // Inserir assinatura e carimbo lado a lado
+  const imagesY = yPosition;
+
+  // Assinatura à esquerda
+  if (data.signature_url) {
     try {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
@@ -120,14 +99,14 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
       
       const signatureHeight = (signatureImg.height * imageSize) / signatureImg.width;
       const signatureX = margin + 10;
-      pdf.addImage(signatureImg, 'PNG', signatureX, signatureY, imageSize, signatureHeight);
+      pdf.addImage(signatureImg, 'PNG', signatureX, imagesY, imageSize, signatureHeight);
     } catch (error) {
       console.error('Erro ao carregar assinatura:', error);
     }
   }
 
-  // Inserir carimbo na posição marcada
-  if (data.stamp_url && hasStamp && stampY > 0) {
+  // Carimbo à direita
+  if (data.stamp_url) {
     try {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';
@@ -139,7 +118,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
       
       const stampHeight = (stampImg.height * imageSize) / stampImg.width;
       const stampX = pageWidth - margin - imageSize - 10;
-      pdf.addImage(stampImg, 'PNG', stampX, stampY, imageSize, stampHeight);
+      pdf.addImage(stampImg, 'PNG', stampX, imagesY, imageSize, stampHeight);
     } catch (error) {
       console.error('Erro ao carregar carimbo:', error);
     }
