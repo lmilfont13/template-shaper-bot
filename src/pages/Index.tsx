@@ -54,7 +54,7 @@ const Index = () => {
               />
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Sistema de Documentos Tarhget
+                  Sistema de Documentos TARHGET
                 </h1>
               </div>
             </div>
