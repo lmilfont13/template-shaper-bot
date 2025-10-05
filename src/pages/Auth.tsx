@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { FileText } from "lucide-react";
+import tarhgetLogo from "@/assets/tarhget-logo.png";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -125,9 +125,11 @@ export default function Auth() {
       <Card className="w-full max-w-md shadow-[var(--shadow-elegant)]">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[var(--shadow-elegant)]">
-              <FileText className="h-10 w-10 text-primary-foreground" />
-            </div>
+            <img 
+              src={tarhgetLogo} 
+              alt="Tarhget Logo" 
+              className="h-20 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl">Sistema de Documentos Tarhget</CardTitle>
         </CardHeader>

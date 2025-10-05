@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { FileText, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import tarhgetLogo from "@/assets/tarhget-logo.png";
 
 const Index = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -46,11 +47,13 @@ const Index = () => {
         <header className="mb-8">
           <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[var(--shadow-elegant)]">
-                <FileText className="h-8 w-8 text-primary-foreground" />
-              </div>
+              <img 
+                src={tarhgetLogo} 
+                alt="Tarhget Logo" 
+                className="h-16 w-auto"
+              />
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Sistema de Documentos Tarhget
                 </h1>
               </div>
