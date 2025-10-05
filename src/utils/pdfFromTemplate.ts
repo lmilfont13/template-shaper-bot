@@ -54,45 +54,58 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   // Ajustar yPosition para começar após a logo
   yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
 
-  // Processar texto para encontrar placeholders antes de dividir em linhas
+  // Processar texto dividindo por parágrafos para manter placeholders intactos
   let contentText = data.processedText;
   const hasSignature = contentText.toLowerCase().includes('{{assinatura}}');
   const hasStamp = contentText.toLowerCase().includes('{{carimbo}}');
   
-  // Substituir placeholders por marcadores temporários únicos
-  contentText = contentText.replace(/\{\{assinatura\}\}/gi, '[PLACEHOLDER_ASSINATURA]');
-  contentText = contentText.replace(/\{\{carimbo\}\}/gi, '[PLACEHOLDER_CARIMBO]');
+  console.log('DEBUG PDF - hasSignature:', hasSignature, 'hasStamp:', hasStamp);
+  console.log('DEBUG PDF - contentText:', contentText);
 
   // Conteúdo do documento com formatação de carta
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
 
-  // Dividir texto em linhas respeitando a largura da página
   const maxWidth = pageWidth - (margin * 2);
-  const lines = pdf.splitTextToSize(contentText, maxWidth);
-  
   const lineSpacing = 5;
   let signatureY = 0;
   let stampY = 0;
   const imageSize = 45; // Tamanho uniforme para ambas as imagens
 
-  for (const line of lines) {
-    if (yPosition > pageHeight - 50) {
+  // Processar texto parágrafo por parágrafo
+  const paragraphs = contentText.split('\n');
+  
+  for (const paragraph of paragraphs) {
+    if (yPosition > pageHeight - 60) {
       break;
     }
     
-    // Detectar marcadores e salvar posições
-    if (line.includes('[PLACEHOLDER_ASSINATURA]')) {
+    // Verificar se é um placeholder
+    if (paragraph.toLowerCase().trim() === '{{assinatura}}') {
+      console.log('DEBUG PDF - Encontrou assinatura na posição:', yPosition);
       signatureY = yPosition;
-      yPosition += imageSize + 10; // Reservar espaço para a imagem
-    } else if (line.includes('[PLACEHOLDER_CARIMBO]')) {
+      yPosition += imageSize + 10;
+    } else if (paragraph.toLowerCase().trim() === '{{carimbo}}') {
+      console.log('DEBUG PDF - Encontrou carimbo na posição:', yPosition);
       stampY = yPosition;
-      yPosition += imageSize + 10; // Reservar espaço para a imagem
+      yPosition += imageSize + 10;
+    } else if (paragraph.trim()) {
+      // Dividir o parágrafo em linhas que cabem na página
+      const lines = pdf.splitTextToSize(paragraph, maxWidth);
+      for (const line of lines) {
+        if (yPosition > pageHeight - 60) {
+          break;
+        }
+        pdf.text(line, margin, yPosition);
+        yPosition += lineSpacing;
+      }
     } else {
-      pdf.text(line, margin, yPosition);
+      // Linha vazia - adicionar espaçamento
       yPosition += lineSpacing;
     }
   }
+  
+  console.log('DEBUG PDF - signatureY:', signatureY, 'stampY:', stampY);
 
   // Inserir assinatura na posição marcada
   if (data.signature_url && hasSignature && signatureY > 0) {
