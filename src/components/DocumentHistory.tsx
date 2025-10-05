@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, Search, Download, Calendar, FileText, Loader2, Trash2 } from "lucide-react";
+import { History, Search, Download, Calendar, FileText, Loader2, Trash2, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
@@ -59,6 +59,25 @@ export const DocumentHistory = () => {
     } finally {
       setDownloadingId(null);
     }
+  };
+
+  const handleWhatsAppShare = (doc: any) => {
+    const message = `📄 *Documento Gerado - Sistema Tarhget*\n\n` +
+      `👤 Funcionário: ${doc.employee_name}\n` +
+      `📋 Tipo: ${doc.template_name}\n` +
+      `🏢 Coligada: ${doc.coligada_name || 'N/A'}\n` +
+      `📅 Data: ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}\n\n` +
+      `_Documento gerado pelo Sistema de Documentos Tarhget_`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
+    
+    toast({
+      title: "WhatsApp aberto!",
+      description: "Compartilhe o documento com seus contatos.",
+    });
   };
 
   const { data: documents, isLoading } = useQuery({
@@ -178,6 +197,15 @@ export const DocumentHistory = () => {
                           Download
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="group-hover:bg-green-600 group-hover:text-white transition-colors"
+                      onClick={() => handleWhatsAppShare(doc)}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      WhatsApp
                     </Button>
                     <Button
                       variant="ghost"
