@@ -87,7 +87,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   const bottomY = pageHeight - 55;
 
   // Assinatura no canto inferior esquerdo (menor conforme layout)
-  if (data.signature_url && data.processedText.match(/{{assinatura}}/gi)) {
+  if (data.signature_url) {
     try {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
@@ -107,7 +107,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData): Promi
   }
 
   // Carimbo no canto inferior direito (maior que assinatura conforme layout)
-  if (data.stamp_url && data.processedText.match(/{{carimbo}}/gi)) {
+  if (data.stamp_url) {
     try {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';
