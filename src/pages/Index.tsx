@@ -51,7 +51,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Sistema de Documentos Target
+                  Sistema de Documentos Tarhget
                 </h1>
               </div>
             </div>

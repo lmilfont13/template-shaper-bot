@@ -129,7 +129,7 @@ export default function Auth() {
               <FileText className="h-10 w-10 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Sistema de Documentos Target</CardTitle>
+          <CardTitle className="text-2xl">Sistema de Documentos Tarhget</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
