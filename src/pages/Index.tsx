@@ -91,42 +91,7 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="generate" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <DocumentGenerator />
-              <div className="lg:col-span-1">
-                <div className="sticky top-8">
-                  <div className="p-6 rounded-xl bg-card border shadow-[var(--shadow-card)]">
-                    <h3 className="font-semibold text-lg mb-3">Como funciona?</h3>
-                    <ol className="space-y-3 text-sm text-muted-foreground">
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
-                          1
-                        </span>
-                        <span>Configure seus templates do Google Docs na aba "Templates"</span>
-                      </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
-                          2
-                        </span>
-                        <span>Preencha o nome do funcionário e selecione o tipo de documento</span>
-                      </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
-                          3
-                        </span>
-                        <span>O sistema irá buscar o template e gerar o PDF automaticamente</span>
-                      </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
-                          4
-                        </span>
-                        <span>Acesse o histórico para fazer download dos documentos gerados</span>
-                      </li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DocumentGenerator />
           </TabsContent>
 
           <TabsContent value="history">
