@@ -54,41 +54,43 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   // Ajustar yPosition para começar após a logo
   yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
 
-  // Remover placeholders de imagens do texto
+  // Não remover placeholders - vamos detectá-los e posicionar as imagens
   let contentText = data.processedText;
-  contentText = contentText.replace(/{{assinatura}}/gi, '');
-  contentText = contentText.replace(/{{carimbo}}/gi, '');
 
   // Conteúdo do documento com formatação de carta
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
 
-  // Calcular espaço disponível para texto (reservar espaço para assinatura/carimbo)
-  const maxTextHeight = pageHeight - yPosition - 65; // 65 para assinatura/carimbo
-  
   // Dividir texto em linhas respeitando a largura da página
   const maxWidth = pageWidth - (margin * 2);
   const lines = pdf.splitTextToSize(contentText, maxWidth);
   
-  // Ajustar espaçamento entre linhas para caber em uma página
-  const lineSpacing = Math.min(5, maxTextHeight / lines.length);
+  const lineSpacing = 5;
+  let signatureY = 0;
+  let stampY = 0;
+  const imageSize = 45; // Tamanho uniforme para ambas as imagens
 
   for (const line of lines) {
-    // Parar se ultrapassar o espaço disponível
-    if (yPosition > pageHeight - 70) {
+    if (yPosition > pageHeight - 50) {
       break;
     }
     
-    pdf.text(line, margin, yPosition);
+    // Detectar placeholders e marcar posições
+    if (line.toLowerCase().includes('{{assinatura}}')) {
+      signatureY = yPosition;
+      // Não renderizar o placeholder
+    } else if (line.toLowerCase().includes('{{carimbo}}')) {
+      stampY = yPosition;
+      // Não renderizar o placeholder
+    } else {
+      pdf.text(line, margin, yPosition);
+    }
+    
     yPosition += lineSpacing;
   }
 
-  // Posicionar assinatura e carimbo logo após o texto
-  yPosition += 15; // Espaçamento após o texto
-  const bottomY = yPosition;
-
-  // Assinatura no canto inferior esquerdo (menor conforme layout)
-  if (data.signature_url) {
+  // Inserir assinatura na posição marcada
+  if (data.signature_url && signatureY > 0) {
     try {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
@@ -98,17 +100,16 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         signatureImg.src = data.signature_url!;
       });
       
-      const signatureWidth = 40;
-      const signatureHeight = (signatureImg.height * signatureWidth) / signatureImg.width;
-      const signatureX = margin + 5;
-      pdf.addImage(signatureImg, 'PNG', signatureX, bottomY, signatureWidth, signatureHeight);
+      const signatureHeight = (signatureImg.height * imageSize) / signatureImg.width;
+      const signatureX = margin + 10;
+      pdf.addImage(signatureImg, 'PNG', signatureX, signatureY, imageSize, signatureHeight);
     } catch (error) {
       console.error('Erro ao carregar assinatura:', error);
     }
   }
 
-  // Carimbo no canto inferior direito (maior que assinatura conforme layout)
-  if (data.stamp_url) {
+  // Inserir carimbo na posição marcada
+  if (data.stamp_url && stampY > 0) {
     try {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';
@@ -118,10 +119,9 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         stampImg.src = data.stamp_url!;
       });
       
-      const stampWidth = 55;
-      const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-      const stampX = pageWidth - margin - stampWidth - 5;
-      pdf.addImage(stampImg, 'PNG', stampX, bottomY - 5, stampWidth, stampHeight);
+      const stampHeight = (stampImg.height * imageSize) / stampImg.width;
+      const stampX = pageWidth - margin - imageSize - 10;
+      pdf.addImage(stampImg, 'PNG', stampX, stampY, imageSize, stampHeight);
     } catch (error) {
       console.error('Erro ao carregar carimbo:', error);
     }
