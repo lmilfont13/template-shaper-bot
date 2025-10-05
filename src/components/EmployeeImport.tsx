@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Papa from "papaparse";
 
 const FIELD_MAPPING = {
@@ -41,6 +42,7 @@ export const EmployeeImport = () => {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [step, setStep] = useState<1 | 2>(1);
+  const [clearDatabase, setClearDatabase] = useState<"add" | "replace">("add");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -48,6 +50,16 @@ export const EmployeeImport = () => {
     mutationFn: async () => {
       if (!csvData.length || !Object.keys(columnMapping).length) {
         throw new Error("Dados ou mapeamento de colunas inválido");
+      }
+
+      // Se a opção for substituir, apagar todos os registros primeiro
+      if (clearDatabase === "replace") {
+        const { error: deleteError } = await supabase
+          .from("employees")
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        
+        if (deleteError) throw deleteError;
       }
 
       const employees = csvData
@@ -73,7 +85,8 @@ export const EmployeeImport = () => {
 
       if (error) throw error;
 
-      return { success: true, imported: data.length, message: `${data.length} funcionário(s) importado(s) com sucesso` };
+      const action = clearDatabase === "replace" ? "substituído(s)" : "importado(s)";
+      return { success: true, imported: data.length, message: `${data.length} funcionário(s) ${action} com sucesso` };
     },
     onSuccess: (data: any) => {
       setImportResult(data);
@@ -101,6 +114,7 @@ export const EmployeeImport = () => {
     setSelectedColumns([]);
     setColumnMapping({});
     setStep(1);
+    setClearDatabase("add");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -325,6 +339,24 @@ export const EmployeeImport = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+                <Label className="text-sm font-medium mb-3 block">O que fazer com os dados existentes?</Label>
+                <RadioGroup value={clearDatabase} onValueChange={(value: "add" | "replace") => setClearDatabase(value)}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="add" id="add" />
+                    <Label htmlFor="add" className="font-normal cursor-pointer">
+                      Adicionar ao banco existente (manter dados atuais)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="replace" id="replace" />
+                    <Label htmlFor="replace" className="font-normal cursor-pointer text-destructive">
+                      Substituir todos os dados (apagar banco e importar novos)
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               <div className="flex gap-3">
