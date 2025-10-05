@@ -83,8 +83,9 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
     yPosition += lineSpacing;
   }
 
-  // Posicionar assinatura e carimbo no final da página
-  const bottomY = pageHeight - 55;
+  // Posicionar assinatura e carimbo logo após o texto
+  yPosition += 15; // Espaçamento após o texto
+  const bottomY = yPosition;
 
   // Assinatura no canto inferior esquerdo (menor conforme layout)
   if (data.signature_url) {
