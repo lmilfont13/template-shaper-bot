@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.process-template]
 verify_jwt = true
+
+[functions.validate-admin-code]
+verify_jwt = false

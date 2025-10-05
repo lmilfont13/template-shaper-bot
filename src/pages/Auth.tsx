@@ -12,6 +12,7 @@ import { FileText } from "lucide-react";
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,28 +29,64 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
+    try {
+      // Validate admin code if provided
+      let isValidAdminCode = false;
+      if (adminCode && adminCode.trim() !== "") {
+        const { data: validationResult } = await supabase.functions.invoke('validate-admin-code', {
+          body: { code: adminCode },
+        });
+        
+        if (validationResult?.valid) {
+          isValidAdminCode = true;
+        } else {
+          toast({
+            title: "Código de acesso inválido",
+            description: "O código de acesso admin fornecido está incorreto.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
 
-    if (error) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            admin_access_code: isValidAdminCode ? adminCode : null,
+          },
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Erro no cadastro",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cadastro realizado!",
+          description: isValidAdminCode 
+            ? "Você foi cadastrado como administrador e já pode fazer login." 
+            : "Você foi cadastrado como usuário e já pode fazer login.",
+        });
+        setEmail("");
+        setPassword("");
+        setAdminCode("");
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
       toast({
         title: "Erro no cadastro",
-        description: error.message,
+        description: "Ocorreu um erro ao processar seu cadastro.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Cadastro realizado!",
-        description: "Você já pode fazer login.",
-      });
-      setEmail("");
-      setPassword("");
     }
+    
     setLoading(false);
   };
 
@@ -151,6 +188,19 @@ export default function Auth() {
                     minLength={6}
                     placeholder="Mínimo 6 caracteres"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-code">Código de Acesso Admin (opcional)</Label>
+                  <Input
+                    id="admin-code"
+                    type="password"
+                    value={adminCode}
+                    onChange={(e) => setAdminCode(e.target.value)}
+                    placeholder="Deixe em branco para conta de usuário"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Insira o código para ter acesso completo ao sistema. Caso contrário, você terá acesso apenas à aba Gerar.
+                  </p>
                 </div>
                 <Button 
                   type="submit" 
