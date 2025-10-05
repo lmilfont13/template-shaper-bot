@@ -329,7 +329,7 @@ export const EmployeeImport = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ignore">Ignorar campo</SelectItem>
-                          {selectedColumns.map((col) => (
+                          {selectedColumns.filter(col => col && col.trim() !== "").map((col) => (
                             <SelectItem key={col} value={col}>
                               {col}
                             </SelectItem>
