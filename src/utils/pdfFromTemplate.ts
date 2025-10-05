@@ -54,8 +54,14 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   // Ajustar yPosition para começar após a logo
   yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
 
-  // Não remover placeholders - vamos detectá-los e posicionar as imagens
+  // Processar texto para encontrar placeholders antes de dividir em linhas
   let contentText = data.processedText;
+  const hasSignature = contentText.toLowerCase().includes('{{assinatura}}');
+  const hasStamp = contentText.toLowerCase().includes('{{carimbo}}');
+  
+  // Substituir placeholders por marcadores temporários únicos
+  contentText = contentText.replace(/\{\{assinatura\}\}/gi, '[PLACEHOLDER_ASSINATURA]');
+  contentText = contentText.replace(/\{\{carimbo\}\}/gi, '[PLACEHOLDER_CARIMBO]');
 
   // Conteúdo do documento com formatação de carta
   pdf.setFontSize(10);
@@ -75,22 +81,21 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
       break;
     }
     
-    // Detectar placeholders e marcar posições
-    if (line.toLowerCase().includes('{{assinatura}}')) {
+    // Detectar marcadores e salvar posições
+    if (line.includes('[PLACEHOLDER_ASSINATURA]')) {
       signatureY = yPosition;
-      // Não renderizar o placeholder
-    } else if (line.toLowerCase().includes('{{carimbo}}')) {
+      yPosition += imageSize + 10; // Reservar espaço para a imagem
+    } else if (line.includes('[PLACEHOLDER_CARIMBO]')) {
       stampY = yPosition;
-      // Não renderizar o placeholder
+      yPosition += imageSize + 10; // Reservar espaço para a imagem
     } else {
       pdf.text(line, margin, yPosition);
+      yPosition += lineSpacing;
     }
-    
-    yPosition += lineSpacing;
   }
 
   // Inserir assinatura na posição marcada
-  if (data.signature_url && signatureY > 0) {
+  if (data.signature_url && hasSignature && signatureY > 0) {
     try {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
@@ -109,7 +114,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   }
 
   // Inserir carimbo na posição marcada
-  if (data.stamp_url && stampY > 0) {
+  if (data.stamp_url && hasStamp && stampY > 0) {
     try {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';
