@@ -313,25 +313,35 @@ export const EmployeeImport = () => {
           <>
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium mb-3">Mapeie cada coluna do CSV para um campo do sistema:</p>
+                <p className="text-sm font-medium mb-3">Mapeie cada coluna da planilha para um campo do sistema:</p>
                 <div className="space-y-3">
-                  {Object.entries(FIELD_MAPPING).map(([dbField, label]) => (
-                    <div key={dbField} className="grid grid-cols-2 gap-3 items-center">
-                      <Label className="text-sm">{label}:</Label>
+                  {selectedColumns.filter(col => col && col.trim() !== "").map((csvColumn) => (
+                    <div key={csvColumn} className="grid grid-cols-2 gap-3 items-center">
+                      <Label className="text-sm font-medium">{csvColumn}:</Label>
                       <Select
-                        value={columnMapping[dbField] || "ignore"}
-                        onValueChange={(value) =>
-                          setColumnMapping(prev => ({ ...prev, [dbField]: value }))
-                        }
+                        value={Object.entries(columnMapping).find(([_, val]) => val === csvColumn)?.[0] || "ignore"}
+                        onValueChange={(dbField) => {
+                          setColumnMapping(prev => {
+                            // Remove o mapeamento anterior desta coluna CSV
+                            const newMapping = Object.fromEntries(
+                              Object.entries(prev).filter(([_, val]) => val !== csvColumn)
+                            );
+                            // Adiciona o novo mapeamento se não for "ignore"
+                            if (dbField !== "ignore") {
+                              newMapping[dbField] = csvColumn;
+                            }
+                            return newMapping;
+                          });
+                        }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Ignorar" />
+                          <SelectValue placeholder="Ignorar campo" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ignore">Ignorar campo</SelectItem>
-                          {selectedColumns.filter(col => col && col.trim() !== "").map((col) => (
-                            <SelectItem key={col} value={col}>
-                              {col}
+                          {Object.entries(FIELD_MAPPING).map(([dbField, label]) => (
+                            <SelectItem key={dbField} value={dbField}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>
