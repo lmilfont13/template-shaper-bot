@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Users, Loader2, Trash2, Edit } from "lucide-react";
+import { Users, Loader2, Trash2, Edit, Plus, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -21,16 +22,30 @@ import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
 export const EmployeeManager = () => {
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [storeName, setStoreName] = useState("");
-  const [rg, setRg] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [letterIssueDate, setLetterIssueDate] = useState("");
-  const [position, setPosition] = useState("");
   const [company, setCompany] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [department, setDepartment] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [rg, setRg] = useState("");
+  const [numeroCarteiraTrabalho, setNumeroCarteiraTrabalho] = useState("");
+  const [coligadaId, setColigadaId] = useState("");
+  const [position, setPosition] = useState("");
+  const [agencia, setAgencia] = useState("");
+  const [additionalFields, setAdditionalFields] = useState<Record<string, string>>({});
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldValue, setNewFieldValue] = useState("");
   const queryClient = useQueryClient();
+
+  const { data: coligadas } = useQuery({
+    queryKey: ["coligadas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coligadas")
+        .select("*")
+        .order("nome");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
@@ -49,15 +64,14 @@ export const EmployeeManager = () => {
     mutationFn: async () => {
       const employeeData = {
         name,
-        store_name: storeName,
-        rg,
-        cpf,
-        letter_issue_date: letterIssueDate || null,
-        position,
         company,
-        email,
-        phone,
-        department,
+        cpf,
+        rg,
+        numero_carteira_trabalho: numeroCarteiraTrabalho || null,
+        coligada_id: coligadaId || null,
+        position,
+        agencia: agencia || null,
+        additional_data: additionalFields,
       };
 
       if (editingEmployee) {
@@ -103,30 +117,49 @@ export const EmployeeManager = () => {
   const clearForm = () => {
     setEditingEmployee(null);
     setName("");
-    setStoreName("");
-    setRg("");
-    setCpf("");
-    setLetterIssueDate("");
-    setPosition("");
     setCompany("");
-    setEmail("");
-    setPhone("");
-    setDepartment("");
+    setCpf("");
+    setRg("");
+    setNumeroCarteiraTrabalho("");
+    setColigadaId("");
+    setPosition("");
+    setAgencia("");
+    setAdditionalFields({});
+    setNewFieldName("");
+    setNewFieldValue("");
   };
 
   const handleEdit = (employee: any) => {
     setEditingEmployee(employee.id);
     setName(employee.name || "");
-    setStoreName(employee.store_name || "");
-    setRg(employee.rg || "");
-    setCpf(employee.cpf || "");
-    setLetterIssueDate(employee.letter_issue_date || "");
-    setPosition(employee.position || "");
     setCompany(employee.company || "");
-    setEmail(employee.email || "");
-    setPhone(employee.phone || "");
-    setDepartment(employee.department || "");
+    setCpf(employee.cpf || "");
+    setRg(employee.rg || "");
+    setNumeroCarteiraTrabalho(employee.numero_carteira_trabalho || "");
+    setColigadaId(employee.coligada_id || "");
+    setPosition(employee.position || "");
+    setAgencia(employee.agencia || "");
+    setAdditionalFields(employee.additional_data || {});
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddField = () => {
+    if (newFieldName.trim() && newFieldValue.trim()) {
+      setAdditionalFields(prev => ({
+        ...prev,
+        [newFieldName]: newFieldValue
+      }));
+      setNewFieldName("");
+      setNewFieldValue("");
+    }
+  };
+
+  const handleRemoveField = (fieldName: string) => {
+    setAdditionalFields(prev => {
+      const newFields = { ...prev };
+      delete newFields[fieldName];
+      return newFields;
+    });
   };
 
   const deleteEmployee = useMutation({
@@ -189,67 +222,12 @@ export const EmployeeManager = () => {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Colaborador*</Label>
+              <Label htmlFor="name">Nome*</Label>
               <Input
                 id="name"
-                placeholder="Nome completo"
+                placeholder="Nome completo do funcionário"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="store-name">Nome da Loja</Label>
-              <Input
-                id="store-name"
-                placeholder="Ex: Loja Centro"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="rg">RG</Label>
-              <Input
-                id="rg"
-                placeholder="00.000.000-0"
-                value={rg}
-                onChange={(e) => setRg(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                placeholder="000.000.000-00"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="letter-date">Data de Emissão da Carta</Label>
-              <Input
-                id="letter-date"
-                type="date"
-                value={letterIssueDate}
-                onChange={(e) => setLetterIssueDate(e.target.value)}
-                className="transition-all duration-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="position">Função</Label>
-              <Input
-                id="position"
-                placeholder="Ex: Vendedor"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
                 className="transition-all duration-200"
               />
             </div>
@@ -266,37 +244,121 @@ export const EmployeeManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="cpf">CPF</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="email@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="cpf"
+                placeholder="000.000.000-00"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
                 className="transition-all duration-200"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="rg">RG</Label>
               <Input
-                id="phone"
-                placeholder="(00) 00000-0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="rg"
+                placeholder="00.000.000-0"
+                value={rg}
+                onChange={(e) => setRg(e.target.value)}
                 className="transition-all duration-200"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="department">Departamento</Label>
+              <Label htmlFor="carteira">Número Carteira de Trabalho</Label>
               <Input
-                id="department"
-                placeholder="Ex: Vendas"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                id="carteira"
+                placeholder="Número da carteira"
+                value={numeroCarteiraTrabalho}
+                onChange={(e) => setNumeroCarteiraTrabalho(e.target.value)}
                 className="transition-all duration-200"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="coligada">Coligada</Label>
+              <Select value={coligadaId} onValueChange={setColigadaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma coligada" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coligadas?.map((coligada) => (
+                    <SelectItem key={coligada.id} value={coligada.id}>
+                      {coligada.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position">Função</Label>
+              <Input
+                id="position"
+                placeholder="Ex: Vendedor"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="agencia">Agência</Label>
+              <Input
+                id="agencia"
+                placeholder="Nome ou número da agência"
+                value={agencia}
+                onChange={(e) => setAgencia(e.target.value)}
+                className="transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {Object.keys(additionalFields).length > 0 && (
+            <div className="space-y-2">
+              <Label>Campos Adicionais</Label>
+              <div className="space-y-2">
+                {Object.entries(additionalFields).map(([key, value]) => (
+                  <div key={key} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                    <span className="font-medium flex-1">{key}:</span>
+                    <span className="flex-1">{value}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveField(key)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
+            <Label>Adicionar Campo Personalizado</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nome do campo"
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
+              />
+              <Input
+                placeholder="Valor"
+                value={newFieldValue}
+                onChange={(e) => setNewFieldValue(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleAddField}
+                disabled={!newFieldName.trim() || !newFieldValue.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -346,45 +408,48 @@ export const EmployeeManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Loja</TableHead>
-                    <TableHead>RG</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>Função</TableHead>
                     <TableHead>Empresa</TableHead>
+                    <TableHead>CPF</TableHead>
+                    <TableHead>RG</TableHead>
+                    <TableHead>Função</TableHead>
+                    <TableHead>Coligada</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {employees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.store_name || "-"}</TableCell>
-                      <TableCell>{employee.rg || "-"}</TableCell>
-                      <TableCell>{employee.cpf || "-"}</TableCell>
-                      <TableCell>{employee.position || "-"}</TableCell>
-                      <TableCell>{employee.company || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(employee)}
-                            disabled={deleteEmployee.isPending}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteEmployee.mutate(employee.id)}
-                            disabled={deleteEmployee.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {employees.map((employee) => {
+                    const coligada = coligadas?.find(c => c.id === employee.coligada_id);
+                    return (
+                      <TableRow key={employee.id}>
+                        <TableCell className="font-medium">{employee.name}</TableCell>
+                        <TableCell>{employee.company || "-"}</TableCell>
+                        <TableCell>{employee.cpf || "-"}</TableCell>
+                        <TableCell>{employee.rg || "-"}</TableCell>
+                        <TableCell>{employee.position || "-"}</TableCell>
+                        <TableCell>{coligada?.nome || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(employee)}
+                              disabled={deleteEmployee.isPending}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteEmployee.mutate(employee.id)}
+                              disabled={deleteEmployee.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

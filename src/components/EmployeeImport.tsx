@@ -15,12 +15,14 @@ import Papa from "papaparse";
 
 const FIELD_MAPPING = {
   name: "Nome",
-  store_name: "Loja",
-  rg: "RG",
-  cpf: "CPF",
-  letter_issue_date: "Data de Emissão",
-  position: "Cargo/Função",
   company: "Empresa",
+  cpf: "CPF",
+  rg: "RG",
+  numero_carteira_trabalho: "Número Carteira de Trabalho",
+  coligada_id: "ID Coligada",
+  position: "Cargo/Função",
+  agencia: "Agência",
+  store_name: "Loja",
   email: "Email",
   phone: "Telefone",
   department: "Departamento",
@@ -32,6 +34,7 @@ const FIELD_MAPPING = {
   zip_code: "CEP",
   emergency_contact: "Contato de Emergência",
   emergency_phone: "Telefone de Emergência",
+  letter_issue_date: "Data de Emissão",
 };
 
 export const EmployeeImport = () => {

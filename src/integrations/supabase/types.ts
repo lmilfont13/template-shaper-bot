@@ -84,7 +84,9 @@ export type Database = {
         Row: {
           additional_data: Json | null
           address: string | null
+          agencia: string | null
           city: string | null
+          coligada_id: string | null
           company: string | null
           company_logo_url: string | null
           cpf: string | null
@@ -97,6 +99,7 @@ export type Database = {
           id: string
           letter_issue_date: string | null
           name: string
+          numero_carteira_trabalho: string | null
           phone: string | null
           position: string | null
           rg: string | null
@@ -111,7 +114,9 @@ export type Database = {
         Insert: {
           additional_data?: Json | null
           address?: string | null
+          agencia?: string | null
           city?: string | null
+          coligada_id?: string | null
           company?: string | null
           company_logo_url?: string | null
           cpf?: string | null
@@ -124,6 +129,7 @@ export type Database = {
           id?: string
           letter_issue_date?: string | null
           name: string
+          numero_carteira_trabalho?: string | null
           phone?: string | null
           position?: string | null
           rg?: string | null
@@ -138,7 +144,9 @@ export type Database = {
         Update: {
           additional_data?: Json | null
           address?: string | null
+          agencia?: string | null
           city?: string | null
+          coligada_id?: string | null
           company?: string | null
           company_logo_url?: string | null
           cpf?: string | null
@@ -151,6 +159,7 @@ export type Database = {
           id?: string
           letter_issue_date?: string | null
           name?: string
+          numero_carteira_trabalho?: string | null
           phone?: string | null
           position?: string | null
           rg?: string | null
@@ -162,7 +171,15 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_coligada_id_fkey"
+            columns: ["coligada_id"]
+            isOneToOne: false
+            referencedRelation: "coligadas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generated_documents: {
         Row: {
