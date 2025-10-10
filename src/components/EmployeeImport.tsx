@@ -146,21 +146,8 @@ export const EmployeeImport = () => {
           setSelectedColumns(columns);
           setSelectedFile(file);
           
-          // Auto-mapping baseado em nomes comuns
-          const autoMapping: Record<string, string> = {};
-          columns.forEach((col) => {
-            const colLower = col.toLowerCase();
-            if (colLower.includes('nome') || colLower === 'name') autoMapping.name = col;
-            if (colLower.includes('loja') || colLower.includes('store')) autoMapping.store_name = col;
-            if (colLower === 'rg') autoMapping.rg = col;
-            if (colLower === 'cpf') autoMapping.cpf = col;
-            if (colLower.includes('cargo') || colLower.includes('funcao') || colLower === 'position') autoMapping.position = col;
-            if (colLower.includes('empresa') || colLower === 'company') autoMapping.company = col;
-            if (colLower === 'email') autoMapping.email = col;
-            if (colLower.includes('telefone') || colLower === 'phone') autoMapping.phone = col;
-            if (colLower.includes('departamento') || colLower === 'department') autoMapping.department = col;
-          });
-          setColumnMapping(autoMapping);
+          // Iniciar sem mapeamento automático - usuário escolhe manualmente
+          setColumnMapping({});
         },
         error: (error) => {
           toast({
