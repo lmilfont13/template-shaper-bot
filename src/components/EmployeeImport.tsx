@@ -309,15 +309,15 @@ export const EmployeeImport = () => {
                     <div key={csvColumn} className="grid grid-cols-2 gap-3 items-center">
                       <Label className="text-sm font-medium">{csvColumn}:</Label>
                       <Select
-                        value={Object.entries(columnMapping).find(([_, val]) => val === csvColumn)?.[0] || "ignore"}
+                        value={Object.entries(columnMapping).find(([_, val]) => val === csvColumn)?.[0] || ""}
                         onValueChange={(dbField) => {
                           setColumnMapping(prev => {
                             // Remove o mapeamento anterior desta coluna CSV
                             const newMapping = Object.fromEntries(
                               Object.entries(prev).filter(([_, val]) => val !== csvColumn)
                             );
-                            // Adiciona o novo mapeamento se não for "ignore"
-                            if (dbField !== "ignore") {
+                            // Adiciona o novo mapeamento se não for vazio
+                            if (dbField && dbField !== "") {
                               newMapping[dbField] = csvColumn;
                             }
                             return newMapping;
@@ -325,10 +325,9 @@ export const EmployeeImport = () => {
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Ignorar campo" />
+                          <SelectValue placeholder="Selecione um campo" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ignore">Ignorar campo</SelectItem>
                           {Object.entries(FIELD_MAPPING).map(([dbField, label]) => (
                             <SelectItem key={dbField} value={dbField}>
                               {label}
