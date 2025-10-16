@@ -31,6 +31,7 @@ export const DocumentGenerator = () => {
   const [selectedColigadaId, setSelectedColigadaId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [storeName, setStoreName] = useState("");
+  const [agenciaFilter, setAgenciaFilter] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [editableData, setEditableData] = useState<Record<string, any>>({});
@@ -229,12 +230,21 @@ export const DocumentGenerator = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedEmployeeIds.length === employees?.length) {
+    const filteredEmployees = getFilteredEmployees();
+    if (selectedEmployeeIds.length === filteredEmployees?.length) {
       setSelectedEmployeeIds([]);
     } else {
-      setSelectedEmployeeIds(employees?.map((e) => e.id) || []);
+      setSelectedEmployeeIds(filteredEmployees?.map((e) => e.id) || []);
     }
   };
+
+  const getFilteredEmployees = () => {
+    if (!employees) return [];
+    if (!agenciaFilter) return employees;
+    return employees.filter((emp) => emp.agencia === agenciaFilter);
+  };
+
+  const uniqueAgencias = Array.from(new Set(employees?.map((e) => e.agencia).filter(Boolean) || []));
 
   const handlePreview = () => {
     if (selectedEmployeeIds.length === 0) {
@@ -404,7 +414,7 @@ export const DocumentGenerator = () => {
               onClick={toggleSelectAll}
               className="h-8"
             >
-              {selectedEmployeeIds.length === employees?.length ? (
+              {selectedEmployeeIds.length === getFilteredEmployees()?.length && getFilteredEmployees().length > 0 ? (
                 <>
                   <Square className="h-4 w-4 mr-2" />
                   Limpar Seleção
@@ -417,14 +427,29 @@ export const DocumentGenerator = () => {
               )}
             </Button>
           </div>
+          {uniqueAgencias.length > 0 && (
+            <Select value={agenciaFilter} onValueChange={setAgenciaFilter}>
+              <SelectTrigger className="transition-all duration-200">
+                <SelectValue placeholder="Filtrar por agência" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="">Todas as agências</SelectItem>
+                {uniqueAgencias.map((agencia) => (
+                  <SelectItem key={agencia} value={agencia}>
+                    {agencia}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {loadingEmployees ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-4 w-4 animate-spin" />
               </div>
-            ) : employees && employees.length > 0 ? (
+            ) : getFilteredEmployees().length > 0 ? (
               <div className="space-y-3">
-                {employees.map((employee) => (
+                {getFilteredEmployees().map((employee) => (
                   <div key={employee.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`employee-${employee.id}`}
@@ -435,14 +460,14 @@ export const DocumentGenerator = () => {
                       htmlFor={`employee-${employee.id}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      {employee.name}
+                      {employee.name} {employee.agencia && `(${employee.agencia})`}
                     </label>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="py-4 text-center text-sm text-muted-foreground">
-                Nenhum funcionário cadastrado
+                {agenciaFilter ? "Nenhum funcionário nesta agência" : "Nenhum funcionário cadastrado"}
               </div>
             )}
           </ScrollArea>
