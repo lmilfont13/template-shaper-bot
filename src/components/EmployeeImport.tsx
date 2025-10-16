@@ -19,6 +19,7 @@ const FIELD_MAPPING = {
   cpf: "CPF",
   rg: "RG",
   numero_carteira_trabalho: "Número Carteira de Trabalho",
+  serie: "Série",
   coligada_id: "ID Coligada",
   position: "Cargo/Função",
   agencia: "Agência",
