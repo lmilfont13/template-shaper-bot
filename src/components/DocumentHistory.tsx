@@ -20,12 +20,12 @@ export const DocumentHistory = () => {
     try {
       setDownloadingId(doc.id);
 
-      // Buscar coligada para pegar as imagens
+      // Buscar coligada para pegar as imagens e endereço
       let coligadaData = null;
       if (doc.coligada_id) {
         const { data: coligada } = await supabase
           .from('coligadas')
-          .select('company_logo_url, signature_url, stamp_url')
+          .select('company_logo_url, signature_url, stamp_url, endereco')
           .eq('id', doc.coligada_id)
           .maybeSingle();
         coligadaData = coligada;
@@ -42,6 +42,7 @@ export const DocumentHistory = () => {
         company_logo_url: coligadaData?.company_logo_url || doc.data?.company_logo_url,
         signature_url: coligadaData?.signature_url || doc.data?.signature_url,
         stamp_url: coligadaData?.stamp_url || doc.data?.stamp_url,
+        coligada_endereco: coligadaData?.endereco || doc.data?.coligada_endereco,
         created_at: doc.created_at,
       });
       
@@ -65,12 +66,12 @@ export const DocumentHistory = () => {
     try {
       setDownloadingId(doc.id);
 
-      // Buscar coligada para pegar as imagens
+      // Buscar coligada para pegar as imagens e endereço
       let coligadaData = null;
       if (doc.coligada_id) {
         const { data: coligada } = await supabase
           .from('coligadas')
-          .select('company_logo_url, signature_url, stamp_url')
+          .select('company_logo_url, signature_url, stamp_url, endereco')
           .eq('id', doc.coligada_id)
           .maybeSingle();
         coligadaData = coligada;
@@ -86,6 +87,7 @@ export const DocumentHistory = () => {
         company_logo_url: coligadaData?.company_logo_url || doc.data?.company_logo_url,
         signature_url: coligadaData?.signature_url || doc.data?.signature_url,
         stamp_url: coligadaData?.stamp_url || doc.data?.stamp_url,
+        coligada_endereco: coligadaData?.endereco || doc.data?.coligada_endereco,
         created_at: doc.created_at,
       }, true) as Blob;
 
