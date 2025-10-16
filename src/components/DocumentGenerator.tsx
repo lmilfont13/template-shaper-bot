@@ -153,6 +153,7 @@ export const DocumentGenerator = () => {
             company_logo_url: coligada.company_logo_url || undefined,
             signature_url: coligada.signature_url || undefined,
             stamp_url: coligada.stamp_url || undefined,
+            coligada_endereco: coligada.endereco || undefined,
             created_at: new Date().toISOString(),
           },
           user_id: user.id,
@@ -344,6 +345,7 @@ export const DocumentGenerator = () => {
       company_logo_url: coligada.company_logo_url,
       signature_url: coligada.signature_url,
       stamp_url: coligada.stamp_url,
+      coligada_endereco: coligada.endereco,
       created_at: new Date().toISOString(),
     });
     setShowDataEditor(false);

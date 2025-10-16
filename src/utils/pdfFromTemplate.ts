@@ -7,6 +7,7 @@ interface TemplateDocumentData {
   company_logo_url?: string;
   signature_url?: string;
   stamp_url?: string;
+  coligada_endereco?: string;
   created_at: string;
 }
 
@@ -124,9 +125,17 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
     }
   }
 
-  // Rodapé com informações
+  // Rodapé com endereço da coligada e data
   pdf.setFontSize(7);
   pdf.setTextColor(150, 150, 150);
+  const footerY = pageHeight - 10;
+  
+  if (data.coligada_endereco) {
+    const enderecoText = data.coligada_endereco;
+    const enderecoWidth = pdf.getTextWidth(enderecoText);
+    pdf.text(enderecoText, (pageWidth - enderecoWidth) / 2, footerY);
+  }
+  
   const footerDate = new Date(data.created_at);
   const footerDateStr = footerDate.toLocaleDateString('pt-BR');
   const footerTimeStr = footerDate.toLocaleTimeString('pt-BR');
