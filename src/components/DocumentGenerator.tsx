@@ -33,6 +33,8 @@ export const DocumentGenerator = () => {
   const [storeName, setStoreName] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
+  const [editableData, setEditableData] = useState<Record<string, any>>({});
+  const [showDataEditor, setShowDataEditor] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
@@ -100,8 +102,8 @@ export const DocumentGenerator = () => {
       const documentsToInsert = [];
 
       for (const employee of selectedEmployees) {
-        // Preparar dados para substituição
-        const templateData: Record<string, any> = {
+        // Se há dados editáveis (veio do preview), usar eles; senão usar dados originais
+        const templateData: Record<string, any> = Object.keys(editableData).length > 0 ? editableData : {
           nome: employee.name,
           nome_colaborador: employee.name,
           loja: storeName || employee.store_name || "",
@@ -120,6 +122,7 @@ export const DocumentGenerator = () => {
           salario: employee.salary ? String(employee.salary) : "",
           numero_carteira_trabalho: employee.numero_carteira_trabalho || "",
           serie: employee.serie || "",
+          agencia: employee.agencia || "",
           endereco: employee.address || "",
           cidade: employee.city || "",
           estado: employee.state || "",
@@ -174,6 +177,7 @@ export const DocumentGenerator = () => {
       setSelectedColigadaId("");
       setSelectedTemplate("");
       setStoreName("");
+      setEditableData({});
     },
     onError: (error) => {
       toast({
@@ -244,7 +248,7 @@ export const DocumentGenerator = () => {
     if (selectedEmployeeIds.length > 1) {
       toast({
         title: "Pré-visualização limitada",
-        description: "Selecione apenas um funcionário para pré-visualizar.",
+        description: "Selecione apenas um funcionário para pré-visualizar e editar.",
         variant: "destructive",
       });
       return;
@@ -274,7 +278,7 @@ export const DocumentGenerator = () => {
     
     if (!template || !employee || !coligada) return;
 
-    // Preparar dados
+    // Preparar dados editáveis
     const templateData: Record<string, any> = {
       nome: employee.name,
       nome_colaborador: employee.name,
@@ -292,6 +296,7 @@ export const DocumentGenerator = () => {
       departamento: employee.department || "",
       numero_carteira_trabalho: employee.numero_carteira_trabalho || "",
       serie: employee.serie || "",
+      agencia: employee.agencia || "",
       endereco: employee.address || "",
       cidade: employee.city || "",
       estado: employee.state || "",
@@ -300,12 +305,22 @@ export const DocumentGenerator = () => {
       telefone_emergencia: employee.emergency_phone || "",
     };
 
-    // Processar template
+    setEditableData(templateData);
+    setShowDataEditor(true);
+  };
+
+  const handleContinueToPreview = () => {
+    const template = templates?.find((t) => t.id === selectedTemplate);
+    const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
+    
+    if (!template || !coligada) return;
+
+    // Processar template com dados editados
     let processedText = template.template_content || "";
     let previewText = processedText;
     
     if (processedText) {
-      Object.entries(templateData).forEach(([key, value]) => {
+      Object.entries(editableData).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
         processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
       });
@@ -321,7 +336,7 @@ export const DocumentGenerator = () => {
     }
 
     setPreviewData({
-      employee_name: employee.name,
+      employee_name: editableData.nome || editableData.nome_colaborador,
       coligada_name: coligada.nome,
       template_name: template.name,
       processedText: previewText,
@@ -331,6 +346,7 @@ export const DocumentGenerator = () => {
       stamp_url: coligada.stamp_url,
       created_at: new Date().toISOString(),
     });
+    setShowDataEditor(false);
     setPreviewOpen(true);
   };
 
@@ -524,6 +540,49 @@ export const DocumentGenerator = () => {
         </Button>
       </CardContent>
 
+      {/* Dialog de Edição de Dados */}
+      <Dialog open={showDataEditor} onOpenChange={setShowDataEditor}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Revisar e Editar Dados do Mapeamento</DialogTitle>
+            <DialogDescription>
+              Revise e ajuste os dados antes de gerar o documento. Você pode alterar qualquer campo sem precisar reimportar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {Object.entries(editableData).map(([key, value]) => (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={`edit-${key}`} className="text-sm font-medium capitalize">
+                  {key.replace(/_/g, ' ')}
+                </Label>
+                <Input
+                  id={`edit-${key}`}
+                  value={value}
+                  onChange={(e) => setEditableData(prev => ({ ...prev, [key]: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDataEditor(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleContinueToPreview}
+            >
+              Continuar para Pré-visualização
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Preview */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
@@ -588,6 +647,15 @@ export const DocumentGenerator = () => {
           )}
 
           <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPreviewOpen(false);
+                setShowDataEditor(true);
+              }}
+            >
+              Voltar para Edição
+            </Button>
             <Button
               variant="outline"
               onClick={() => setPreviewOpen(false)}
