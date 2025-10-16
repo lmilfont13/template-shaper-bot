@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           company_logo_url: string | null
           created_at: string
+          endereco: string | null
           id: string
           nome: string
           signature_url: string | null
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           company_logo_url?: string | null
           created_at?: string
+          endereco?: string | null
           id?: string
           nome: string
           signature_url?: string | null
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           company_logo_url?: string | null
           created_at?: string
+          endereco?: string | null
           id?: string
           nome?: string
           signature_url?: string | null

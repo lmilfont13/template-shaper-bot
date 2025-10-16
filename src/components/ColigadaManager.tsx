@@ -15,6 +15,7 @@ import { ImageUpload } from "./ImageUpload";
 interface Coligada {
   id: string;
   nome: string;
+  endereco: string | null;
   company_logo_url: string | null;
   signature_url: string | null;
   stamp_url: string | null;
@@ -27,6 +28,7 @@ export const ColigadaManager = () => {
   const [editingColigada, setEditingColigada] = useState<Coligada | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
+    endereco: "",
     company_logo_url: "",
     signature_url: "",
     stamp_url: "",
@@ -107,6 +109,7 @@ export const ColigadaManager = () => {
       setEditingColigada(coligada);
       setFormData({
         nome: coligada.nome,
+        endereco: coligada.endereco || "",
         company_logo_url: coligada.company_logo_url || "",
         signature_url: coligada.signature_url || "",
         stamp_url: coligada.stamp_url || "",
@@ -115,6 +118,7 @@ export const ColigadaManager = () => {
       setEditingColigada(null);
       setFormData({
         nome: "",
+        endereco: "",
         company_logo_url: "",
         signature_url: "",
         stamp_url: "",
@@ -128,6 +132,7 @@ export const ColigadaManager = () => {
     setEditingColigada(null);
     setFormData({
       nome: "",
+      endereco: "",
       company_logo_url: "",
       signature_url: "",
       stamp_url: "",
@@ -262,6 +267,16 @@ export const ColigadaManager = () => {
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 placeholder="Ex: Matriz São Paulo"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco">Endereço</Label>
+              <Input
+                id="endereco"
+                value={formData.endereco}
+                onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                placeholder="Ex: Rua Exemplo, 123 - São Paulo/SP"
               />
             </div>
 
