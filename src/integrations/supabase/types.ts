@@ -104,6 +104,7 @@ export type Database = {
           position: string | null
           rg: string | null
           salary: number | null
+          serie: string | null
           signature_url: string | null
           stamp_url: string | null
           state: string | null
@@ -134,6 +135,7 @@ export type Database = {
           position?: string | null
           rg?: string | null
           salary?: number | null
+          serie?: string | null
           signature_url?: string | null
           stamp_url?: string | null
           state?: string | null
@@ -164,6 +166,7 @@ export type Database = {
           position?: string | null
           rg?: string | null
           salary?: number | null
+          serie?: string | null
           signature_url?: string | null
           stamp_url?: string | null
           state?: string | null

@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
       '{{data_admissao}}': employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : '',
       '{{salario}}': employee.salary ? String(employee.salary) : '',
       '{{numero_carteira_trabalho}}': employee.numero_carteira_trabalho || '',
+      '{{serie}}': employee.serie || '',
       '{{endereco}}': employee.address || '',
       '{{cidade}}': employee.city || '',
       '{{estado}}': employee.state || '',
