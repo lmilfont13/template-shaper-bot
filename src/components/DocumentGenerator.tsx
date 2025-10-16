@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -21,11 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { FileText, Loader2, Eye } from "lucide-react";
+import { FileText, Loader2, Eye, CheckSquare, Square } from "lucide-react";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 
 export const DocumentGenerator = () => {
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const [selectedColigadaId, setSelectedColigadaId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [storeName, setStoreName] = useState("");
@@ -77,53 +79,10 @@ export const DocumentGenerator = () => {
       const template = templates?.find((t) => t.id === selectedTemplate);
       if (!template) throw new Error("Template não encontrado");
 
-      const employee = employees?.find((e) => e.id === selectedEmployeeId);
-      
-      if (!employee) {
-        throw new Error("Funcionário não encontrado. Selecione um funcionário da lista.");
-      }
-
       const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
       
       if (!coligada) {
         throw new Error("Coligada não encontrada. Selecione uma coligada da lista.");
-      }
-
-      // Preparar dados para substituição
-      const templateData: Record<string, any> = {
-        nome: employee.name,
-        nome_colaborador: employee.name,
-        loja: storeName || employee.store_name || "",
-        nome_loja: storeName || employee.store_name || "",
-        rg: employee.rg || "",
-        cpf: employee.cpf || "",
-        data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
-        data_carta: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
-        funcao: employee.position || "",
-        cargo: employee.position || "",
-        empresa: employee.company || "",
-        email: employee.email || "",
-        telefone: employee.phone || "",
-        departamento: employee.department || "",
-        data_admissao: employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : "",
-        salario: employee.salary ? String(employee.salary) : "",
-        numero_carteira_trabalho: employee.numero_carteira_trabalho || "",
-        serie: employee.serie || "",
-        endereco: employee.address || "",
-        cidade: employee.city || "",
-        estado: employee.state || "",
-        cep: employee.zip_code || "",
-        contato_emergencia: employee.emergency_contact || "",
-        telefone_emergencia: employee.emergency_phone || "",
-      };
-
-      // Processar template se houver conteúdo
-      let processedText = template.template_content || "";
-      if (processedText) {
-        Object.entries(templateData).forEach(([key, value]) => {
-          const placeholder = `{{${key}}}`;
-          processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
-        });
       }
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -132,9 +91,53 @@ export const DocumentGenerator = () => {
         throw new Error("Usuário não autenticado");
       }
 
-      const { data, error } = await supabase
-        .from("generated_documents")
-        .insert({
+      const selectedEmployees = employees?.filter((e) => selectedEmployeeIds.includes(e.id)) || [];
+      
+      if (selectedEmployees.length === 0) {
+        throw new Error("Nenhum funcionário selecionado.");
+      }
+
+      const documentsToInsert = [];
+
+      for (const employee of selectedEmployees) {
+        // Preparar dados para substituição
+        const templateData: Record<string, any> = {
+          nome: employee.name,
+          nome_colaborador: employee.name,
+          loja: storeName || employee.store_name || "",
+          nome_loja: storeName || employee.store_name || "",
+          rg: employee.rg || "",
+          cpf: employee.cpf || "",
+          data_emissao: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+          data_carta: employee.letter_issue_date ? new Date(employee.letter_issue_date).toLocaleDateString('pt-BR') : "",
+          funcao: employee.position || "",
+          cargo: employee.position || "",
+          empresa: employee.company || "",
+          email: employee.email || "",
+          telefone: employee.phone || "",
+          departamento: employee.department || "",
+          data_admissao: employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('pt-BR') : "",
+          salario: employee.salary ? String(employee.salary) : "",
+          numero_carteira_trabalho: employee.numero_carteira_trabalho || "",
+          serie: employee.serie || "",
+          endereco: employee.address || "",
+          cidade: employee.city || "",
+          estado: employee.state || "",
+          cep: employee.zip_code || "",
+          contato_emergencia: employee.emergency_contact || "",
+          telefone_emergencia: employee.emergency_phone || "",
+        };
+
+        // Processar template se houver conteúdo
+        let processedText = template.template_content || "";
+        if (processedText) {
+          Object.entries(templateData).forEach(([key, value]) => {
+            const placeholder = `{{${key}}}`;
+            processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
+          });
+        }
+
+        documentsToInsert.push({
           employee_name: employee.name,
           template_id: selectedTemplate,
           template_name: template.name,
@@ -150,21 +153,24 @@ export const DocumentGenerator = () => {
             created_at: new Date().toISOString(),
           },
           user_id: user.id,
-        })
-        .select()
-        .single();
+        });
+      }
+
+      const { error } = await supabase
+        .from("generated_documents")
+        .insert(documentsToInsert);
 
       if (error) throw error;
       
-      return data;
+      return documentsToInsert;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Documento gerado!",
-        description: "O documento foi criado com sucesso.",
+        title: "Documentos gerados!",
+        description: `${data.length} documento(s) criado(s) com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
-      setSelectedEmployeeId("");
+      setSelectedEmployeeIds([]);
       setSelectedColigadaId("");
       setSelectedTemplate("");
       setStoreName("");
@@ -179,10 +185,10 @@ export const DocumentGenerator = () => {
   });
 
   const handleGenerate = () => {
-    if (!selectedEmployeeId) {
+    if (selectedEmployeeIds.length === 0) {
       toast({
         title: "Funcionário obrigatório",
-        description: "Por favor, selecione um funcionário.",
+        description: "Por favor, selecione pelo menos um funcionário.",
         variant: "destructive",
       });
       return;
@@ -209,11 +215,36 @@ export const DocumentGenerator = () => {
     generateDocument.mutate();
   };
 
+  const toggleEmployeeSelection = (employeeId: string) => {
+    setSelectedEmployeeIds((prev) =>
+      prev.includes(employeeId)
+        ? prev.filter((id) => id !== employeeId)
+        : [...prev, employeeId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEmployeeIds.length === employees?.length) {
+      setSelectedEmployeeIds([]);
+    } else {
+      setSelectedEmployeeIds(employees?.map((e) => e.id) || []);
+    }
+  };
+
   const handlePreview = () => {
-    if (!selectedEmployeeId) {
+    if (selectedEmployeeIds.length === 0) {
       toast({
         title: "Funcionário obrigatório",
-        description: "Por favor, selecione um funcionário.",
+        description: "Por favor, selecione pelo menos um funcionário.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedEmployeeIds.length > 1) {
+      toast({
+        title: "Pré-visualização limitada",
+        description: "Selecione apenas um funcionário para pré-visualizar.",
         variant: "destructive",
       });
       return;
@@ -238,7 +269,7 @@ export const DocumentGenerator = () => {
     }
 
     const template = templates?.find((t) => t.id === selectedTemplate);
-    const employee = employees?.find((e) => e.id === selectedEmployeeId);
+    const employee = employees?.find((e) => e.id === selectedEmployeeIds[0]);
     const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
     
     if (!template || !employee || !coligada) return;
@@ -346,29 +377,62 @@ export const DocumentGenerator = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="employee-select">Funcionário</Label>
-          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-            <SelectTrigger id="employee-select" className="transition-all duration-200">
-              <SelectValue placeholder="Selecione o funcionário" />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              {loadingEmployees ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : employees && employees.length > 0 ? (
-                employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </SelectItem>
-                ))
+          <div className="flex items-center justify-between">
+            <Label>Funcionários</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={toggleSelectAll}
+              className="h-8"
+            >
+              {selectedEmployeeIds.length === employees?.length ? (
+                <>
+                  <Square className="h-4 w-4 mr-2" />
+                  Limpar Seleção
+                </>
               ) : (
-                <div className="py-4 text-center text-sm text-muted-foreground">
-                  Nenhum funcionário cadastrado
-                </div>
+                <>
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Selecionar Todos
+                </>
               )}
-            </SelectContent>
-          </Select>
+            </Button>
+          </div>
+          <ScrollArea className="h-[200px] border rounded-md p-4">
+            {loadingEmployees ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : employees && employees.length > 0 ? (
+              <div className="space-y-3">
+                {employees.map((employee) => (
+                  <div key={employee.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`employee-${employee.id}`}
+                      checked={selectedEmployeeIds.includes(employee.id)}
+                      onCheckedChange={() => toggleEmployeeSelection(employee.id)}
+                    />
+                    <label
+                      htmlFor={`employee-${employee.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {employee.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-4 text-center text-sm text-muted-foreground">
+                Nenhum funcionário cadastrado
+              </div>
+            )}
+          </ScrollArea>
+          {selectedEmployeeIds.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {selectedEmployeeIds.length} funcionário(s) selecionado(s)
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
