@@ -50,6 +50,21 @@ export const EmployeeImport = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
+  // Carregar mapeamento salvo do localStorage
+  const [savedMappings, setSavedMappings] = useState<Array<{ name: string; mapping: Record<string, string>; columns: string[] }>>([]);
+
+  // Carregar mapeamentos salvos ao montar o componente
+  useState(() => {
+    const saved = localStorage.getItem("employeeImportMappings");
+    if (saved) {
+      try {
+        setSavedMappings(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erro ao carregar mapeamentos salvos:", e);
+      }
+    }
+  });
+
   const importFromCsv = useMutation({
     mutationFn: async () => {
       if (!csvData.length || !Object.keys(columnMapping).length) {
@@ -122,6 +137,57 @@ export const EmployeeImport = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const saveMappingTemplate = () => {
+    const name = prompt("Digite um nome para este mapeamento:");
+    if (!name) return;
+
+    const newMapping = {
+      name,
+      mapping: columnMapping,
+      columns: selectedColumns,
+    };
+
+    const updated = [...savedMappings, newMapping];
+    setSavedMappings(updated);
+    localStorage.setItem("employeeImportMappings", JSON.stringify(updated));
+
+    toast({
+      title: "Mapeamento salvo!",
+      description: `Modelo "${name}" salvo com sucesso`,
+    });
+  };
+
+  const loadMappingTemplate = (templateName: string) => {
+    const template = savedMappings.find(m => m.name === templateName);
+    if (!template) return;
+
+    // Aplicar apenas os mapeamentos que correspondem às colunas atuais do CSV
+    const validMapping: Record<string, string> = {};
+    Object.entries(template.mapping).forEach(([dbField, csvColumn]) => {
+      if (csvColumns.includes(csvColumn)) {
+        validMapping[dbField] = csvColumn;
+      }
+    });
+
+    setColumnMapping(validMapping);
+    
+    toast({
+      title: "Mapeamento carregado!",
+      description: `Modelo "${templateName}" aplicado`,
+    });
+  };
+
+  const deleteMappingTemplate = (templateName: string) => {
+    const updated = savedMappings.filter(m => m.name !== templateName);
+    setSavedMappings(updated);
+    localStorage.setItem("employeeImportMappings", JSON.stringify(updated));
+
+    toast({
+      title: "Mapeamento excluído",
+      description: `Modelo "${templateName}" removido`,
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -303,8 +369,47 @@ export const EmployeeImport = () => {
         ) : (
           <>
             <div className="space-y-4">
+              {savedMappings.length > 0 && (
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <p className="text-sm font-medium mb-3">Usar um mapeamento salvo:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {savedMappings.map((template) => (
+                      <div key={template.name} className="flex items-center gap-2 bg-background rounded-md px-3 py-2 border">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => loadMappingTemplate(template.name)}
+                          className="h-auto p-0 font-medium hover:text-primary"
+                        >
+                          {template.name}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteMappingTemplate(template.name)}
+                          className="h-auto p-1 text-destructive hover:text-destructive"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium mb-3">Mapeie cada coluna da planilha para um campo do sistema:</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">Mapeie cada coluna da planilha para um campo do sistema:</p>
+                  {Object.keys(columnMapping).length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={saveMappingTemplate}
+                    >
+                      Salvar Mapeamento
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-3">
                   {selectedColumns.filter(col => col && col.trim() !== "").map((csvColumn) => (
                     <div key={csvColumn} className="grid grid-cols-2 gap-3 items-center">
