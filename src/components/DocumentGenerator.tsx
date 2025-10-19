@@ -428,19 +428,30 @@ export const DocumentGenerator = () => {
             </Button>
           </div>
           {uniqueAgencias.length > 0 && (
-            <Select value={agenciaFilter} onValueChange={setAgenciaFilter}>
-              <SelectTrigger className="transition-all duration-200">
-                <SelectValue placeholder="Filtrar por agência" />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="">Todas as agências</SelectItem>
-                {uniqueAgencias.map((agencia) => (
-                  <SelectItem key={agencia} value={agencia}>
-                    {agencia}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 items-center">
+              <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
+                <SelectTrigger className="transition-all duration-200">
+                  <SelectValue placeholder="Todas as agências" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {uniqueAgencias.map((agencia) => (
+                    <SelectItem key={agencia} value={agencia}>
+                      {agencia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {agenciaFilter && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAgenciaFilter("")}
+                  className="h-8 px-2"
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
           )}
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {loadingEmployees ? (
