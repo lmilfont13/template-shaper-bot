@@ -32,6 +32,7 @@ export const DocumentGenerator = () => {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [storeName, setStoreName] = useState("");
   const [agenciaFilter, setAgenciaFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [editableData, setEditableData] = useState<Record<string, any>>({});
@@ -240,8 +241,25 @@ export const DocumentGenerator = () => {
 
   const getFilteredEmployees = () => {
     if (!employees) return [];
-    if (!agenciaFilter) return employees;
-    return employees.filter((emp) => emp.agencia === agenciaFilter);
+    
+    let filtered = employees;
+    
+    // Filter by agency
+    if (agenciaFilter) {
+      filtered = filtered.filter((emp) => emp.agencia === agenciaFilter);
+    }
+    
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((emp) => 
+        emp.name.toLowerCase().includes(search) ||
+        emp.cpf?.toLowerCase().includes(search) ||
+        emp.position?.toLowerCase().includes(search)
+      );
+    }
+    
+    return filtered;
   };
 
   const uniqueAgencias = Array.from(new Set(employees?.map((e) => e.agencia).filter(Boolean) || []));
@@ -427,32 +445,41 @@ export const DocumentGenerator = () => {
               )}
             </Button>
           </div>
-          {uniqueAgencias.length > 0 && (
-            <div className="flex gap-2 items-center">
-              <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
-                <SelectTrigger className="transition-all duration-200">
-                  <SelectValue placeholder="Todas as agências" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {uniqueAgencias.map((agencia) => (
-                    <SelectItem key={agencia} value={agencia}>
-                      {agencia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {agenciaFilter && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAgenciaFilter("")}
-                  className="h-8 px-2"
-                >
-                  Limpar
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="Buscar por nome, CPF ou cargo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+            {uniqueAgencias.length > 0 && (
+              <div className="flex gap-2 items-center">
+                <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
+                  <SelectTrigger className="transition-all duration-200">
+                    <SelectValue placeholder="Todas as agências" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {uniqueAgencias.map((agencia) => (
+                      <SelectItem key={agencia} value={agencia}>
+                        {agencia}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {agenciaFilter && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAgenciaFilter("")}
+                    className="h-8 px-2"
+                  >
+                    Limpar
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {loadingEmployees ? (
               <div className="flex items-center justify-center py-4">
@@ -478,7 +505,7 @@ export const DocumentGenerator = () => {
               </div>
             ) : (
               <div className="py-4 text-center text-sm text-muted-foreground">
-                {agenciaFilter ? "Nenhum funcionário nesta agência" : "Nenhum funcionário cadastrado"}
+                {agenciaFilter || searchTerm ? "Nenhum funcionário encontrado com esses filtros" : "Nenhum funcionário cadastrado"}
               </div>
             )}
           </ScrollArea>
