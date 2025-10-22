@@ -19,6 +19,8 @@ import {
 import { EmployeeImport } from "./EmployeeImport";
 import { CleanEmptyEmployees } from "./CleanEmptyEmployees";
 import { RemoveDuplicates } from "./RemoveDuplicates";
+import { exportToCSV } from "@/utils/exportUtils";
+import { Download } from "lucide-react";
 
 export const EmployeeManager = () => {
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
@@ -394,10 +396,49 @@ export const EmployeeManager = () => {
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle>Funcionários Cadastrados</CardTitle>
-          <CardDescription>
-            Lista de todos os funcionários no sistema
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Funcionários Cadastrados</CardTitle>
+              <CardDescription>
+                Lista de todos os funcionários no sistema
+              </CardDescription>
+            </div>
+            {employees && employees.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const columns = [
+                    { key: 'name', label: 'Nome' },
+                    { key: 'company', label: 'Empresa' },
+                    { key: 'cpf', label: 'CPF' },
+                    { key: 'rg', label: 'RG' },
+                    { key: 'numero_carteira_trabalho', label: 'Carteira de Trabalho' },
+                    { key: 'position', label: 'Função' },
+                    { key: 'agencia', label: 'Agência' },
+                  ];
+                  
+                  const dataWithColigada = employees.map(emp => ({
+                    ...emp,
+                    coligada_nome: coligadas?.find(c => c.id === emp.coligada_id)?.nome || ''
+                  }));
+                  
+                  exportToCSV(dataWithColigada, 'funcionarios', [
+                    ...columns,
+                    { key: 'coligada_nome', label: 'Coligada' }
+                  ]);
+                  
+                  toast({
+                    title: "Exportação concluída!",
+                    description: "A lista de funcionários foi exportada.",
+                  });
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
+import { exportToCSV } from "@/utils/exportUtils";
 
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -184,6 +185,35 @@ export const DocumentHistory = () => {
               {documents?.length || 0} documento(s) gerado(s)
             </CardDescription>
           </div>
+          {documents && documents.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const columns = [
+                  { key: 'employee_name', label: 'Funcionário' },
+                  { key: 'template_name', label: 'Tipo de Documento' },
+                  { key: 'coligada_name', label: 'Coligada' },
+                  { key: 'created_at', label: 'Data de Criação' },
+                ];
+                
+                const formattedData = documents.map(doc => ({
+                  ...doc,
+                  created_at: format(new Date(doc.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                }));
+                
+                exportToCSV(formattedData, 'historico_documentos', columns);
+                
+                toast({
+                  title: "Exportação concluída!",
+                  description: "O histórico foi exportado.",
+                });
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+          )}
         </div>
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
