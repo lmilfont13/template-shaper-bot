@@ -1,13 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface GeneratePdfRequest {
-  documentId: string;
-}
+const requestSchema = z.object({
+  documentId: z.string().uuid('Invalid document ID'),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,7 +20,16 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { documentId } = await req.json() as GeneratePdfRequest;
+    // Validate input
+    const parseResult = requestSchema.safeParse(await req.json());
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: 'Dados inválidos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { documentId } = parseResult.data;
 
     // Buscar o documento
     const { data: document, error: docError } = await supabase
@@ -47,35 +57,11 @@ Deno.serve(async (req) => {
     // Gerar HTML do documento
     const htmlContent = generateHtmlContent(document);
 
-    // Converter HTML para PDF usando uma API externa (PDF.co ou similar)
-    // Por enquanto, vamos criar um PDF simples com texto
+    // Converter HTML para PDF
     const pdfBlob = await generatePdfFromHtml(htmlContent);
 
-    // Upload do PDF para o storage - remover acentos e caracteres especiais
-    const sanitizedEmployeeName = document.employee_name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove caracteres especiais
-      .replace(/\s+/g, '_') // Substitui espaços por _
-      .replace(/_+/g, '_') // Remove _ duplicados
-      .replace(/^_|_$/g, '') // Remove _ no início e fim
-      .substring(0, 50); // Limita tamanho
-    
-    const sanitizedTemplateName = document.template_name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9\s]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-      .substring(0, 30);
-    
-    // Se o nome ficar vazio, usar um fallback
-    const finalEmployeeName = sanitizedEmployeeName || 'funcionario';
-    const finalTemplateName = sanitizedTemplateName || 'documento';
-    
-    const fileName = `${finalEmployeeName}_${finalTemplateName}_${Date.now()}.pdf`;
-    const filePath = `${fileName}`; // Não usar subpasta 'documents/' se não existir
+    // Upload do PDF - use random UUID for unpredictable filenames
+    const filePath = `${crypto.randomUUID()}.pdf`;
 
     console.log('Uploading to:', filePath);
     
@@ -101,13 +87,17 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao atualizar documento: ${updateError.message}`);
     }
 
-    // Obter URL pública do arquivo
-    const { data: { publicUrl } } = supabase.storage
+    // Use signed URL instead of public URL
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('documents')
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+    if (signedUrlError) {
+      throw new Error(`Erro ao gerar URL: ${signedUrlError.message}`);
+    }
 
     return new Response(
-      JSON.stringify({ success: true, filePath, publicUrl }),
+      JSON.stringify({ success: true, filePath, publicUrl: signedUrlData.signedUrl }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
@@ -251,11 +241,7 @@ function formatFieldName(key: string): string {
 }
 
 async function generatePdfFromHtml(html: string): Promise<Blob> {
-  // Usar a API do pdf.co ou similar para converter HTML em PDF
-  // Por enquanto, vou usar uma biblioteca simples
-  
   try {
-    // Usar API pública para conversão HTML -> PDF
     const response = await fetch('https://api.html2pdf.app/v1/generate', {
       method: 'POST',
       headers: {
@@ -280,7 +266,6 @@ async function generatePdfFromHtml(html: string): Promise<Blob> {
     return await response.blob();
   } catch (error) {
     console.error('Error generating PDF:', error);
-    // Fallback: criar um PDF básico de texto
     return new Blob([html], { type: 'application/pdf' });
   }
 }

@@ -58,13 +58,16 @@ export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: Lo
 
       if (uploadError) throw uploadError;
 
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
+      // Use signed URL for private bucket
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('documents')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 86400); // 24 hours
 
-      setPreviewUrl(publicUrl);
-      onLogoUploaded(publicUrl);
+      if (signedUrlError) throw signedUrlError;
+
+      const signedUrl = signedUrlData.signedUrl;
+      setPreviewUrl(signedUrl);
+      onLogoUploaded(filePath); // Store the path, not the URL
 
       toast({
         title: "Logo enviada!",
