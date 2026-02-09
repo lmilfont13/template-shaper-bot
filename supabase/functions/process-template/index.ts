@@ -1,14 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ProcessTemplateRequest {
-  templateId: string;
-  employeeId: string;
-}
+const requestSchema = z.object({
+  templateId: z.string().uuid('Invalid template ID'),
+  employeeId: z.string().uuid('Invalid employee ID'),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,7 +22,16 @@ Deno.serve(async (req) => {
     const googleApiKey = Deno.env.get('GOOGLE_DOCS_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { templateId, employeeId } = await req.json() as ProcessTemplateRequest;
+    // Validate input
+    const parseResult = requestSchema.safeParse(await req.json());
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: 'Dados inválidos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { templateId, employeeId } = parseResult.data;
 
     console.log('Processing template:', templateId, 'for employee:', employeeId);
 
@@ -133,9 +143,8 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in process-template:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Erro ao processar template' }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

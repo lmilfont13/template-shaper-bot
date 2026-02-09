@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_code_attempts: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       coligadas: {
         Row: {
           company_logo_url: string | null
