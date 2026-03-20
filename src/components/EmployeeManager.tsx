@@ -209,90 +209,86 @@ export const EmployeeManager = () => {
       <RemoveDuplicates />
       <EmployeeImport />
       
-      <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-        <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
-              <Users className="h-7 w-7 text-primary-foreground" />
-            </div>
+      <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-300">
+        <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">
+              <CardTitle className="text-xl font-bold">
                 {editingEmployee ? "Editar Funcionário" : "Novo Funcionário"}
               </CardTitle>
-              <CardDescription className="text-base text-muted-foreground/80">
-                {editingEmployee 
-                  ? "Atualize as informações cadastrais para emissão de documentos" 
-                  : "Cadastre novos membros para automatizar sua documentação"}
+              <CardDescription className="text-sm">
+                Manutenção do cadastro de colaboradores
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-8 space-y-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider opacity-60">Nome Completo *</Label>
+        <CardContent className="p-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-semibold">Nome Completo *</Label>
               <Input
                 id="name"
                 placeholder="Ex: João Silva"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wider opacity-60">Empresa / Razão Social</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="company" className="text-xs font-semibold">Empresa / Razão Social</Label>
               <Input
                 id="company"
                 placeholder="Empresa principal"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cpf" className="text-xs font-bold uppercase tracking-wider opacity-60">CPF</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cpf" className="text-xs font-semibold">CPF</Label>
               <Input
                 id="cpf"
                 placeholder="000.000.000-00"
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="rg" className="text-xs font-bold uppercase tracking-wider opacity-60">RG</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="rg" className="text-xs font-semibold">RG</Label>
               <Input
                 id="rg"
                 placeholder="00.000.000-0"
                 value={rg}
                 onChange={(e) => setRg(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="carteira" className="text-xs font-bold uppercase tracking-wider opacity-60">CTPS</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="carteira" className="text-xs font-semibold">CTPS</Label>
               <Input
                 id="carteira"
                 placeholder="Número série/uf"
                 value={numeroCarteiraTrabalho}
                 onChange={(e) => setNumeroCarteiraTrabalho(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="coligada" className="text-xs font-bold uppercase tracking-wider opacity-60">Coligada Vinculada</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="coligada" className="text-xs font-semibold">Coligada Vinculada</Label>
               <Select value={coligadaId} onValueChange={setColigadaId}>
-                <SelectTrigger className="h-11 glass-card hover:border-primary/50 transition-all duration-300">
+                <SelectTrigger className="h-10 glass-card">
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
-                <SelectContent className="glass-card border-primary/20">
+                <SelectContent className="glass-card">
                   {coligadas?.map((coligada) => (
-                    <SelectItem key={coligada.id} value={coligada.id} className="hover:bg-primary/10">
+                    <SelectItem key={coligada.id} value={coligada.id}>
                       {coligada.nome}
                     </SelectItem>
                   ))}
@@ -300,25 +296,25 @@ export const EmployeeManager = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="position" className="text-xs font-bold uppercase tracking-wider opacity-60">Cargo / Função</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="position" className="text-xs font-semibold">Cargo / Função</Label>
               <Input
                 id="position"
                 placeholder="Ex: Gerente"
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="agencia" className="text-xs font-bold uppercase tracking-wider opacity-60">Agência / Lotação</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="agencia" className="text-xs font-semibold">Agência / Lotação</Label>
               <Input
                 id="agencia"
                 placeholder="Unidade de trabalho"
                 value={agencia}
                 onChange={(e) => setAgencia(e.target.value)}
-                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
+                className="h-10 glass-card"
               />
             </div>
           </div>
@@ -370,15 +366,15 @@ export const EmployeeManager = () => {
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-2">
             <Button
               onClick={handleSave}
               disabled={saveEmployee.isPending}
-              className="flex-1 h-12 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.01] transition-all duration-300 premium-shadow rounded-xl"
+              className="flex-1 h-10 text-base font-bold"
             >
               {saveEmployee.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...
                 </>
               ) : (
@@ -389,10 +385,10 @@ export const EmployeeManager = () => {
               <Button
                 onClick={clearForm}
                 variant="outline"
-                className="h-12 px-8 glass-card hover:bg-destructive/5 hover:text-destructive transition-all duration-300 rounded-xl"
+                className="h-10 px-6 glass-card"
                 disabled={saveEmployee.isPending}
               >
-                Descartar
+                Cancelar
               </Button>
             )}
           </div>
@@ -400,12 +396,12 @@ export const EmployeeManager = () => {
       </Card>
 
       <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
-        <CardHeader className="bg-gradient-to-r from-accent/10 to-transparent border-b border-accent/10 pb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">Base de Colaboradores</CardTitle>
-              <CardDescription className="text-base text-muted-foreground/80">
-                Visualizando {employees?.length || 0} registros ativos no banco de dados
+              <CardTitle className="text-xl font-bold">Base de Colaboradores</CardTitle>
+              <CardDescription className="text-xs">
+                {employees?.length || 0} registros ativos
               </CardDescription>
             </div>
             {employees && employees.length > 0 && (
@@ -441,7 +437,7 @@ export const EmployeeManager = () => {
                 }}
               >
                 <Download className="h-4 w-4" />
-                Planilha CSV
+                Exportar CSV
               </Button>
             )}
           </div>
@@ -456,40 +452,40 @@ export const EmployeeManager = () => {
               <Table>
                 <TableHeader className="bg-primary/5">
                   <TableRow className="hover:bg-transparent border-primary/10">
-                    <TableHead className="py-5 font-bold text-foreground">Colaborador</TableHead>
-                    <TableHead className="py-5 font-bold text-foreground">Documentação</TableHead>
-                    <TableHead className="py-5 font-bold text-foreground">Cargo / Lotação</TableHead>
-                    <TableHead className="py-5 font-bold text-foreground">Empresa / Coligada</TableHead>
-                    <TableHead className="py-5 font-bold text-foreground text-right">Ações</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Colaborador</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Documentação</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Cargo / Lotação</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Empresa / Coligada</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employees.map((employee) => {
                     const coligada = coligadas?.find(c => c.id === employee.coligada_id);
                     return (
-                      <TableRow key={employee.id} className="hover:bg-primary/5 transition-colors duration-200 border-primary/5">
-                        <TableCell className="py-5">
+                      <TableRow key={employee.id} className="hover:bg-primary/5 transition-colors border-primary/5">
+                        <TableCell className="py-3">
                           <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{employee.name}</p>
                         </TableCell>
-                        <TableCell className="py-5">
+                        <TableCell className="py-3">
                           <div className="flex flex-col gap-1">
                             <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">CPF: {employee.cpf || "N/A"}</code>
                             <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">RG: {employee.rg || "N/A"}</code>
                           </div>
                         </TableCell>
-                        <TableCell className="py-5">
+                        <TableCell className="py-3">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-sm font-semibold">{employee.position || "Não definido"}</span>
                             <span className="text-[10px] text-muted-foreground uppercase">{employee.agencia || "Sem agência"}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-5">
+                        <TableCell className="py-3">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-sm font-semibold">{employee.company || "-"}</span>
                             <span className="text-[10px] text-primary font-bold uppercase tracking-tighter">{coligada?.nome || "Vínculo externo"}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-5 text-right">
+                        <TableCell className="py-3 text-right">
                           <div className="flex gap-2 justify-end">
                             <Button
                               variant="ghost"

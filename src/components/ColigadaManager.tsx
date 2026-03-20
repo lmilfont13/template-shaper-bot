@@ -168,29 +168,28 @@ export const ColigadaManager = () => {
 
   return (
     <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
-              <Building2 className="h-7 w-7 text-primary-foreground" />
-            </div>
+      <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4 text-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Building2 className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">Gestão de Coligadas</CardTitle>
-              <CardDescription className="text-base text-muted-foreground/80">
-                Configure as empresas, logotipos e assinaturas oficiais
+              <CardTitle className="text-lg font-bold">Gestão de Coligadas</CardTitle>
+              <CardDescription className="text-xs">
+                Empresas, logotipos e assinaturas
               </CardDescription>
             </div>
           </div>
           <Button 
             onClick={() => handleOpenDialog()} 
-            className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl font-bold"
+            size="sm"
+            className="h-9 px-4 font-bold"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Adicionar Coligada
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-8">
+      <CardContent className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -200,23 +199,23 @@ export const ColigadaManager = () => {
             <Table>
               <TableHeader className="bg-primary/5">
                 <TableRow className="hover:bg-transparent border-primary/10">
-                  <TableHead className="py-5 font-bold text-foreground">Identificação</TableHead>
-                  <TableHead className="py-5 font-bold text-foreground">Logo</TableHead>
-                  <TableHead className="py-5 font-bold text-foreground">Assinatura</TableHead>
-                  <TableHead className="py-5 font-bold text-foreground">Carimbo</TableHead>
-                  <TableHead className="py-5 font-bold text-foreground text-right">Ações</TableHead>
+                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Identificação</TableHead>
+                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Logo</TableHead>
+                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Assinatura</TableHead>
+                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Carimbo</TableHead>
+                  <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {coligadas.map((coligada) => (
-                  <TableRow key={coligada.id} className="hover:bg-primary/5 transition-colors duration-200 border-primary/5">
-                    <TableCell className="py-5">
+                  <TableRow key={coligada.id} className="hover:bg-primary/5 transition-colors border-primary/5">
+                    <TableCell className="py-3">
                       <div className="space-y-0.5">
                         <p className="font-bold text-base leading-none">{coligada.nome}</p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{coligada.endereco || "Endereço não informado"}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="py-5">
+                    <TableCell className="py-3">
                       {coligada.company_logo_url ? (
                         <StorageImage path={coligada.company_logo_url} alt="Logo" className="h-10 w-auto object-contain" />
                       ) : (
@@ -225,7 +224,7 @@ export const ColigadaManager = () => {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="py-5">
+                    <TableCell className="py-3">
                       {coligada.signature_url ? (
                         <StorageImage path={coligada.signature_url} alt="Assinatura" className="h-10 w-auto object-contain" />
                       ) : (
@@ -234,7 +233,7 @@ export const ColigadaManager = () => {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="py-5">
+                    <TableCell className="py-3">
                       {coligada.stamp_url ? (
                         <StorageImage path={coligada.stamp_url} alt="Carimbo" className="h-10 w-auto object-contain" />
                       ) : (
@@ -243,13 +242,12 @@ export const ColigadaManager = () => {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="py-5 text-right">
+                    <TableCell className="py-3 text-right">
                       <div className="flex gap-2 justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleOpenDialog(coligada)}
-                          className="h-10 w-10 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>

@@ -423,30 +423,28 @@ export const DocumentGenerator = () => {
   };
 
   return (
-    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/30 transform transition-transform hover:scale-110 duration-300">
-            <FileText className="h-7 w-7 text-primary-foreground" />
-          </div>
+    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-300">
+      <CardHeader className="bg-primary/5 border-b border-primary/5 pb-4">
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-primary" />
           <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Gerar Novo Documento</CardTitle>
-            <CardDescription className="text-base">
-              Selecione os parâmetros abaixo para automatizar sua documentação
+            <CardTitle className="text-xl font-bold">Gerar Novo Documento</CardTitle>
+            <CardDescription className="text-sm">
+              Automatize sua documentação rapidamente
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-8 space-y-8">
+      <CardContent className="p-6 space-y-6">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <Label htmlFor="coligada-select" className="text-sm font-semibold uppercase tracking-wider opacity-70">Coligada Responsável</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="coligada-select" className="text-xs font-semibold">Coligada Responsável</Label>
             <Select value={selectedColigadaId} onValueChange={setSelectedColigadaId}>
-              <SelectTrigger id="coligada-select" className="h-12 glass-card hover:border-primary/50 transition-all duration-300">
+              <SelectTrigger id="coligada-select" className="h-10 glass-card">
                 <SelectValue placeholder="Selecione a coligada" />
               </SelectTrigger>
-              <SelectContent className="glass-card border-primary/20">
+              <SelectContent className="glass-card">
                 {loadingColigadas ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -466,13 +464,13 @@ export const DocumentGenerator = () => {
             </Select>
           </div>
 
-          <div className="space-y-4">
-            <Label htmlFor="template-select" className="text-sm font-semibold uppercase tracking-wider opacity-70">Tipo de Documento</Label>
+          <div className="space-y-2">
+            <Label htmlFor="template-select" className="text-xs font-semibold">Tipo de Documento</Label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-              <SelectTrigger id="template-select" className="h-12 glass-card hover:border-primary/50 transition-all duration-300">
-                <SelectValue placeholder="Selecione o tipo de documento" />
+              <SelectTrigger id="template-select" className="h-10 glass-card">
+                <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
-              <SelectContent className="glass-card border-primary/20">
+              <SelectContent className="glass-card">
                 {loadingTemplates ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -493,27 +491,27 @@ export const DocumentGenerator = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <Label htmlFor="store-name" className="text-sm font-semibold uppercase tracking-wider opacity-70">Identificação da Unidade (Loja)</Label>
+        <div className="space-y-2">
+          <Label htmlFor="store-name" className="text-xs font-semibold">Unidade (Loja)</Label>
           <Input
             id="store-name"
             type="text"
-            placeholder="Ex: Unidade Centro - São Paulo"
+            placeholder="Ex: Unidade Centro"
             value={storeName}
             onChange={(e) => setStoreName(e.target.value)}
-            className="h-12 glass-card focus:ring-primary/50 transition-all duration-300"
+            className="h-10 glass-card"
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold uppercase tracking-wider opacity-70">Seleção de Funcionários</Label>
+            <Label className="text-xs font-semibold">Funcionários</Label>
             <Button
               type="button"
-              variant="ghost"
+              variant="link"
               size="sm"
               onClick={toggleSelectAll}
-              className="h-8 hover:text-primary transition-colors"
+              className="h-6 p-0 text-xs"
             >
               {selectedEmployeeIds.length === getFilteredEmployees()?.length && getFilteredEmployees().length > 0 ? (
                 <>
@@ -529,25 +527,24 @@ export const DocumentGenerator = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="md:col-span-3">
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Nome, CPF ou Cargo..."
+                  placeholder="Buscar funcionário..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-11 glass-card pl-10"
+                  className="h-10 glass-card"
                 />
-                <Loader2 className="absolute left-3 top-3 h-5 w-5 opacity-20" />
               </div>
             </div>
             {uniqueAgencias.length > 0 && (
               <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
-                <SelectTrigger className="h-11 glass-card">
-                  <SelectValue placeholder="Todas agências" />
+                <SelectTrigger className="h-10 glass-card">
+                  <SelectValue placeholder="Agência" />
                 </SelectTrigger>
-                <SelectContent className="glass-card border-primary/20">
+                <SelectContent className="glass-card">
                   {uniqueAgencias.map((agencia) => (
                     <SelectItem key={agencia} value={agencia}>
                       {agencia}

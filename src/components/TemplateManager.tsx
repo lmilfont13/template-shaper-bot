@@ -108,17 +108,15 @@ export const TemplateManager = () => {
   });
 
   return (
-    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
-              <Settings className="h-7 w-7 text-primary-foreground" />
-            </div>
+    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-300">
+      <CardHeader className="bg-primary/5 border-b border-primary/10 pb-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Settings className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">Biblioteca de Templates</CardTitle>
-              <CardDescription className="text-base text-muted-foreground/80">
-                Gerencie os modelos e textos padrão para seus documentos
+              <CardTitle className="text-xl font-bold">Biblioteca de Templates</CardTitle>
+              <CardDescription className="text-sm">
+                Modelos de documentos e textos padrão
               </CardDescription>
             </div>
           </div>
@@ -133,8 +131,8 @@ export const TemplateManager = () => {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl font-bold">
-                <Plus className="h-5 w-5 mr-2" />
+              <Button size="sm" className="h-9 px-4 font-bold">
+                <Plus className="h-4 w-4 mr-2" />
                 Novo Template
               </Button>
             </DialogTrigger>
@@ -202,7 +200,7 @@ export const TemplateManager = () => {
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
