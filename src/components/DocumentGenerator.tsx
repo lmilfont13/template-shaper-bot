@@ -25,7 +25,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { FileText, Loader2, Eye, CheckSquare, Square } from "lucide-react";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
-import { getStorageUrl } from "@/utils/supabaseStorage";
+import { getStorageUrl, useStorageUrl } from "@/utils/supabaseStorage";
+
+const PreviewImage = ({ path, alt, className }: { path: string | null | undefined, alt: string, className?: string }) => {
+  const { url, loading } = useStorageUrl(path);
+  
+  if (loading) return <div className="h-20 w-20 flex items-center justify-center mx-auto"><Loader2 className="h-4 w-4 animate-spin opacity-20" /></div>;
+  if (!url) return null;
+  
+  return (
+    <img 
+      src={url} 
+      alt={alt} 
+      className={className}
+    />
+  );
+};
 
 export const DocumentGenerator = () => {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -423,99 +438,6 @@ export const DocumentGenerator = () => {
         </div>
       </CardHeader>
       <CardContent className="p-8 space-y-8">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Funcionários</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleSelectAll}
-              className="h-8"
-            >
-              {selectedEmployeeIds.length === getFilteredEmployees()?.length && getFilteredEmployees().length > 0 ? (
-                <>
-                  <Square className="h-4 w-4 mr-2" />
-                  Limpar Seleção
-                </>
-              ) : (
-                <>
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Selecionar Todos
-                </>
-              )}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Input
-              type="text"
-              placeholder="Buscar por nome, CPF ou cargo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-            {uniqueAgencias.length > 0 && (
-              <div className="flex gap-2 items-center">
-                <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
-                  <SelectTrigger className="transition-all duration-200">
-                    <SelectValue placeholder="Todas as agências" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {uniqueAgencias.map((agencia) => (
-                      <SelectItem key={agencia} value={agencia}>
-                        {agencia}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {agenciaFilter && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setAgenciaFilter("")}
-                    className="h-8 px-2"
-                  >
-                    Limpar
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-          <ScrollArea className="h-[200px] border rounded-md p-4">
-            {loadingEmployees ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            ) : getFilteredEmployees().length > 0 ? (
-              <div className="space-y-3">
-                {getFilteredEmployees().map((employee) => (
-                  <div key={employee.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`employee-${employee.id}`}
-                      checked={selectedEmployeeIds.includes(employee.id)}
-                      onCheckedChange={() => toggleEmployeeSelection(employee.id)}
-                    />
-                    <label
-                      htmlFor={`employee-${employee.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {employee.name} {employee.agencia && `(${employee.agencia})`}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-4 text-center text-sm text-muted-foreground">
-                {agenciaFilter || searchTerm ? "Nenhum funcionário encontrado com esses filtros" : "Nenhum funcionário cadastrado"}
-              </div>
-            )}
-          </ScrollArea>
-          {selectedEmployeeIds.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {selectedEmployeeIds.length} funcionário(s) selecionado(s)
-            </p>
-          )}
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
@@ -776,8 +698,8 @@ export const DocumentGenerator = () => {
                   <div className="flex gap-4 flex-wrap">
                     {previewData.company_logo_url && (
                       <div className="text-center">
-                        <img 
-                          src={getStorageUrl(previewData.company_logo_url)} 
+                        <PreviewImage 
+                          path={previewData.company_logo_url} 
                           alt="Logo" 
                           className="max-h-20 mx-auto mb-1"
                         />
@@ -786,8 +708,8 @@ export const DocumentGenerator = () => {
                     )}
                     {previewData.signature_url && (
                       <div className="text-center">
-                        <img 
-                          src={getStorageUrl(previewData.signature_url)} 
+                        <PreviewImage 
+                          path={previewData.signature_url} 
                           alt="Assinatura" 
                           className="max-h-20 mx-auto mb-1"
                         />
@@ -796,8 +718,8 @@ export const DocumentGenerator = () => {
                     )}
                     {previewData.stamp_url && (
                       <div className="text-center">
-                        <img 
-                          src={getStorageUrl(previewData.stamp_url)} 
+                        <PreviewImage 
+                          path={previewData.stamp_url} 
                           alt="Carimbo" 
                           className="max-h-20 mx-auto mb-1"
                         />

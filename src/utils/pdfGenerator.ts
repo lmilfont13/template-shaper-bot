@@ -44,7 +44,7 @@ export const generatePDF = async (document: DocumentData): Promise<void> => {
   let logoHeight = 0;
   if (document.company_logo_url) {
     try {
-      const url = getStorageUrl(document.company_logo_url);
+      const url = await getStorageUrl(document.company_logo_url);
       if (url) {
         const img = new Image();
         img.crossOrigin = 'anonymous';

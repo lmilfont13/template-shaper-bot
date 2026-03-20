@@ -22,7 +22,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   // Adicionar logo no canto superior esquerdo
   let logoHeight = 0;
   try {
-    const url = getStorageUrl(data.company_logo_url);
+    const url = await getStorageUrl(data.company_logo_url);
     if (url) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -91,7 +91,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
 
   // Assinatura à esquerda
   try {
-    const url = getStorageUrl(data.signature_url);
+    const url = await getStorageUrl(data.signature_url);
     if (url) {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
@@ -111,7 +111,7 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
 
   // Carimbo à direita
   try {
-    const url = getStorageUrl(data.stamp_url);
+    const url = await getStorageUrl(data.stamp_url);
     if (url) {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';

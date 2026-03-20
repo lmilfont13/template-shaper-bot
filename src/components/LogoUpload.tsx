@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Loader2, X, Image } from "lucide-react";
-import { getStorageUrl } from "@/utils/supabaseStorage";
+import { useStorageUrl } from "@/utils/supabaseStorage";
 
 interface LogoUploadProps {
   currentLogoUrl?: string;
@@ -15,7 +15,10 @@ interface LogoUploadProps {
 
 export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: LogoUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(getStorageUrl(currentLogoUrl) || "");
+  const { url: storageUrl } = useStorageUrl(currentLogoUrl);
+  const [internalPreviewUrl, setInternalPreviewUrl] = useState<string | undefined>(undefined);
+  
+  const displayUrl = internalPreviewUrl || storageUrl;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -67,7 +70,7 @@ export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: Lo
       if (signedUrlError) throw signedUrlError;
 
       const signedUrl = signedUrlData.signedUrl;
-      setPreviewUrl(signedUrl);
+      setInternalPreviewUrl(signedUrl);
       onLogoUploaded(filePath); // Store the path, not the URL
 
       toast({
@@ -87,7 +90,7 @@ export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: Lo
   };
 
   const handleRemoveLogo = () => {
-    setPreviewUrl("");
+    setInternalPreviewUrl(undefined);
     onLogoRemoved();
     toast({
       title: "Logo removida",
@@ -99,11 +102,11 @@ export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: Lo
     <div className="space-y-3">
       <Label htmlFor="logo-upload">Logo da Empresa</Label>
       
-      {previewUrl ? (
+      {displayUrl ? (
         <div className="relative w-full max-w-xs">
           <div className="border-2 border-dashed rounded-lg p-4 bg-muted/50">
             <img 
-              src={previewUrl} 
+              src={displayUrl} 
               alt="Logo da empresa" 
               className="max-h-32 mx-auto object-contain"
             />

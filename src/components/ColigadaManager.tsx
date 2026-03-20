@@ -11,7 +11,20 @@ import { toast } from "@/hooks/use-toast";
 import { Building2, Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { LogoUpload } from "./LogoUpload";
 import { ImageUpload } from "./ImageUpload";
-import { getStorageUrl } from "@/utils/supabaseStorage";
+import { getStorageUrl, useStorageUrl } from "@/utils/supabaseStorage";
+
+const StorageImage = ({ path, alt, className }: { path: string | null | undefined, alt: string, className?: string }) => {
+  const { url, loading } = useStorageUrl(path);
+  
+  if (loading) return <div className="h-10 w-10 flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin opacity-20" /></div>;
+  if (!url) return null;
+  
+  return (
+    <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
+      <img src={url} alt={alt} className={className} />
+    </div>
+  );
+};
 
 interface Coligada {
   id: string;
@@ -205,9 +218,7 @@ export const ColigadaManager = () => {
                     </TableCell>
                     <TableCell className="py-5">
                       {coligada.company_logo_url ? (
-                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
-                          <img src={getStorageUrl(coligada.company_logo_url)} alt="Logo" className="h-10 w-auto object-contain" />
-                        </div>
+                        <StorageImage path={coligada.company_logo_url} alt="Logo" className="h-10 w-auto object-contain" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
                           <Building2 className="h-4 w-4 opacity-20" />
@@ -216,9 +227,7 @@ export const ColigadaManager = () => {
                     </TableCell>
                     <TableCell className="py-5">
                       {coligada.signature_url ? (
-                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
-                          <img src={getStorageUrl(coligada.signature_url)} alt="Assinatura" className="h-10 w-auto object-contain" />
-                        </div>
+                        <StorageImage path={coligada.signature_url} alt="Assinatura" className="h-10 w-auto object-contain" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
                           <Pencil className="h-4 w-4 opacity-20" />
@@ -227,9 +236,7 @@ export const ColigadaManager = () => {
                     </TableCell>
                     <TableCell className="py-5">
                       {coligada.stamp_url ? (
-                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
-                          <img src={getStorageUrl(coligada.stamp_url)} alt="Carimbo" className="h-10 w-auto object-contain" />
-                        </div>
+                        <StorageImage path={coligada.stamp_url} alt="Carimbo" className="h-10 w-auto object-contain" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
                           <div className="h-4 w-4 rounded-full border-2 border-dashed opacity-20" />

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Image } from "lucide-react";
-import { getStorageUrl } from "@/utils/supabaseStorage";
+import { useStorageUrl } from "@/utils/supabaseStorage";
 
 interface ImageUploadProps {
   label: string;
@@ -25,7 +25,10 @@ export const ImageUpload = ({
   id
 }: ImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(getStorageUrl(currentImageUrl) || "");
+  const { url: storageUrl, loading: loadingUrl } = useStorageUrl(currentImageUrl);
+  const [internalPreviewUrl, setInternalPreviewUrl] = useState<string | undefined>(undefined);
+  
+  const displayUrl = internalPreviewUrl || storageUrl;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,7 +80,7 @@ export const ImageUpload = ({
       if (signedUrlError) throw signedUrlError;
 
       const signedUrl = signedUrlData.signedUrl;
-      setPreviewUrl(signedUrl);
+      setInternalPreviewUrl(signedUrl);
       onImageUploaded(filePath); // Store the path, not the URL
 
       toast({
@@ -97,7 +100,7 @@ export const ImageUpload = ({
   };
 
   const handleRemoveImage = () => {
-    setPreviewUrl("");
+    setInternalPreviewUrl(undefined);
     onImageRemoved();
     toast({
       title: "Imagem removida",
@@ -109,11 +112,11 @@ export const ImageUpload = ({
     <div className="space-y-3">
       <Label htmlFor={id}>{label}</Label>
       
-      {previewUrl ? (
+      {displayUrl ? (
         <div className="relative w-full max-w-xs">
           <div className="border-2 border-dashed rounded-lg p-4 bg-muted/50">
             <img 
-              src={previewUrl} 
+              src={displayUrl} 
               alt={label} 
               className="max-h-32 mx-auto object-contain"
             />
