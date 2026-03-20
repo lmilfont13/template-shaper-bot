@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Loader2, X, Image } from "lucide-react";
+import { getStorageUrl } from "@/utils/supabaseStorage";
 
 interface LogoUploadProps {
   currentLogoUrl?: string;
@@ -14,7 +15,7 @@ interface LogoUploadProps {
 
 export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: LogoUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(currentLogoUrl || "");
+  const [previewUrl, setPreviewUrl] = useState(getStorageUrl(currentLogoUrl) || "");
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

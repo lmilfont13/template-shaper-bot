@@ -209,86 +209,90 @@ export const EmployeeManager = () => {
       <RemoveDuplicates />
       <EmployeeImport />
       
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-              <Users className="h-6 w-6 text-primary-foreground" />
+      <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+        <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
+              <Users className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle>{editingEmployee ? "Editar Funcionário" : "Cadastrar Funcionário"}</CardTitle>
-              <CardDescription>
-                {editingEmployee ? "Atualize os dados do funcionário" : "Adicione os dados dos funcionários para usar nos documentos"}
+              <CardTitle className="text-2xl font-bold tracking-tight">
+                {editingEmployee ? "Editar Funcionário" : "Novo Funcionário"}
+              </CardTitle>
+              <CardDescription className="text-base text-muted-foreground/80">
+                {editingEmployee 
+                  ? "Atualize as informações cadastrais para emissão de documentos" 
+                  : "Cadastre novos membros para automatizar sua documentação"}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="p-8 space-y-8">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome*</Label>
+              <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider opacity-60">Nome Completo *</Label>
               <Input
                 id="name"
-                placeholder="Nome completo do funcionário"
+                placeholder="Ex: João Silva"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wider opacity-60">Empresa / Razão Social</Label>
               <Input
                 id="company"
-                placeholder="Nome da empresa"
+                placeholder="Empresa principal"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
+              <Label htmlFor="cpf" className="text-xs font-bold uppercase tracking-wider opacity-60">CPF</Label>
               <Input
                 id="cpf"
                 placeholder="000.000.000-00"
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rg">RG</Label>
+              <Label htmlFor="rg" className="text-xs font-bold uppercase tracking-wider opacity-60">RG</Label>
               <Input
                 id="rg"
                 placeholder="00.000.000-0"
                 value={rg}
                 onChange={(e) => setRg(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="carteira">Número Carteira de Trabalho</Label>
+              <Label htmlFor="carteira" className="text-xs font-bold uppercase tracking-wider opacity-60">CTPS</Label>
               <Input
                 id="carteira"
-                placeholder="Número da carteira"
+                placeholder="Número série/uf"
                 value={numeroCarteiraTrabalho}
                 onChange={(e) => setNumeroCarteiraTrabalho(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="coligada">Coligada</Label>
+              <Label htmlFor="coligada" className="text-xs font-bold uppercase tracking-wider opacity-60">Coligada Vinculada</Label>
               <Select value={coligadaId} onValueChange={setColigadaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma coligada" />
+                <SelectTrigger className="h-11 glass-card hover:border-primary/50 transition-all duration-300">
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass-card border-primary/20">
                   {coligadas?.map((coligada) => (
-                    <SelectItem key={coligada.id} value={coligada.id}>
+                    <SelectItem key={coligada.id} value={coligada.id} className="hover:bg-primary/10">
                       {coligada.nome}
                     </SelectItem>
                   ))}
@@ -297,24 +301,24 @@ export const EmployeeManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Função</Label>
+              <Label htmlFor="position" className="text-xs font-bold uppercase tracking-wider opacity-60">Cargo / Função</Label>
               <Input
                 id="position"
-                placeholder="Ex: Vendedor"
+                placeholder="Ex: Gerente"
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="agencia">Agência</Label>
+              <Label htmlFor="agencia" className="text-xs font-bold uppercase tracking-wider opacity-60">Agência / Lotação</Label>
               <Input
                 id="agencia"
-                placeholder="Nome ou número da agência"
+                placeholder="Unidade de trabalho"
                 value={agencia}
                 onChange={(e) => setAgencia(e.target.value)}
-                className="transition-all duration-200"
+                className="h-11 glass-card focus:ring-primary/50 transition-all duration-300"
               />
             </div>
           </div>
@@ -366,47 +370,49 @@ export const EmployeeManager = () => {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 pt-4">
             <Button
               onClick={handleSave}
               disabled={saveEmployee.isPending}
-              className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
+              className="flex-1 h-12 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.01] transition-all duration-300 premium-shadow rounded-xl"
             >
               {saveEmployee.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {editingEmployee ? "Atualizando..." : "Cadastrando..."}
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Salvando...
                 </>
               ) : (
-                editingEmployee ? "Atualizar Funcionário" : "Cadastrar Funcionário"
+                editingEmployee ? "Salvar Alterações" : "Cadastrar Agora"
               )}
             </Button>
             {editingEmployee && (
               <Button
                 onClick={clearForm}
                 variant="outline"
+                className="h-12 px-8 glass-card hover:bg-destructive/5 hover:text-destructive transition-all duration-300 rounded-xl"
                 disabled={saveEmployee.isPending}
               >
-                Cancelar
+                Descartar
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
+        <CardHeader className="bg-gradient-to-r from-accent/10 to-transparent border-b border-accent/10 pb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <CardTitle>Funcionários Cadastrados</CardTitle>
-              <CardDescription>
-                Lista de todos os funcionários no sistema
+              <CardTitle className="text-2xl font-bold tracking-tight">Base de Colaboradores</CardTitle>
+              <CardDescription className="text-base text-muted-foreground/80">
+                Visualizando {employees?.length || 0} registros ativos no banco de dados
               </CardDescription>
             </div>
             {employees && employees.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
+                className="glass-card h-10 px-4 hover:bg-accent/10 hover:text-accent transition-all duration-300 rounded-lg flex items-center gap-2"
                 onClick={() => {
                   const columns = [
                     { key: 'name', label: 'Nome' },
@@ -429,54 +435,68 @@ export const EmployeeManager = () => {
                   ]);
                   
                   toast({
-                    title: "Exportação concluída!",
-                    description: "A lista de funcionários foi exportada.",
+                    title: "Relatório gerado!",
+                    description: "A lista de funcionários foi exportada para CSV.",
                   });
                 }}
               >
-                <Download className="h-4 w-4 mr-2" />
-                Exportar CSV
+                <Download className="h-4 w-4" />
+                Planilha CSV
               </Button>
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-8">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : employees && employees.length > 0 ? (
-            <div className="rounded-md border">
+            <div className="rounded-2xl overflow-hidden border border-primary/10 glass-card">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>RG</TableHead>
-                    <TableHead>Função</TableHead>
-                    <TableHead>Coligada</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
+                <TableHeader className="bg-primary/5">
+                  <TableRow className="hover:bg-transparent border-primary/10">
+                    <TableHead className="py-5 font-bold text-foreground">Colaborador</TableHead>
+                    <TableHead className="py-5 font-bold text-foreground">Documentação</TableHead>
+                    <TableHead className="py-5 font-bold text-foreground">Cargo / Lotação</TableHead>
+                    <TableHead className="py-5 font-bold text-foreground">Empresa / Coligada</TableHead>
+                    <TableHead className="py-5 font-bold text-foreground text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employees.map((employee) => {
                     const coligada = coligadas?.find(c => c.id === employee.coligada_id);
                     return (
-                      <TableRow key={employee.id}>
-                        <TableCell className="font-medium">{employee.name}</TableCell>
-                        <TableCell>{employee.company || "-"}</TableCell>
-                        <TableCell>{employee.cpf || "-"}</TableCell>
-                        <TableCell>{employee.rg || "-"}</TableCell>
-                        <TableCell>{employee.position || "-"}</TableCell>
-                        <TableCell>{coligada?.nome || "-"}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
+                      <TableRow key={employee.id} className="hover:bg-primary/5 transition-colors duration-200 border-primary/5">
+                        <TableCell className="py-5">
+                          <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{employee.name}</p>
+                        </TableCell>
+                        <TableCell className="py-5">
+                          <div className="flex flex-col gap-1">
+                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">CPF: {employee.cpf || "N/A"}</code>
+                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">RG: {employee.rg || "N/A"}</code>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-5">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold">{employee.position || "Não definido"}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase">{employee.agencia || "Sem agência"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-5">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold">{employee.company || "-"}</span>
+                            <span className="text-[10px] text-primary font-bold uppercase tracking-tighter">{coligada?.nome || "Vínculo externo"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-5 text-right">
+                          <div className="flex gap-2 justify-end">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(employee)}
                               disabled={deleteEmployee.isPending}
+                              className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -485,6 +505,7 @@ export const EmployeeManager = () => {
                               size="icon"
                               onClick={() => deleteEmployee.mutate(employee.id)}
                               disabled={deleteEmployee.isPending}
+                              className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

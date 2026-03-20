@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Settings, Trash2, FileText } from "lucide-react";
+import { Plus, Settings, Trash2, FileText, Loader2 } from "lucide-react";
 
 export const TemplateManager = () => {
   const [open, setOpen] = useState(false);
@@ -108,17 +108,17 @@ export const TemplateManager = () => {
   });
 
   return (
-    <Card className="shadow-[var(--shadow-card)]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-              <Settings className="h-6 w-6 text-primary-foreground" />
+    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
+              <Settings className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle>Gerenciar Templates</CardTitle>
-              <CardDescription>
-                Crie e gerencie templates de documentos
+              <CardTitle className="text-2xl font-bold tracking-tight">Biblioteca de Templates</CardTitle>
+              <CardDescription className="text-base text-muted-foreground/80">
+                Gerencie os modelos e textos padrão para seus documentos
               </CardDescription>
             </div>
           </div>
@@ -133,8 +133,8 @@ export const TemplateManager = () => {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-primary to-accent">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl font-bold">
+                <Plus className="h-5 w-5 mr-2" />
                 Novo Template
               </Button>
             </DialogTrigger>
@@ -205,62 +205,66 @@ export const TemplateManager = () => {
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
           </div>
         ) : templates && templates.length > 0 ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-all duration-200 group"
+                className="p-6 rounded-2xl glass-card hover:premium-shadow hover-lift border-transparent hover:border-primary/10 transition-all duration-300 group flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <FileText className="h-5 w-5 text-primary" />
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                      <FileText className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{template.name}</h4>
-                        <Badge variant="secondary">{template.type}</Badge>
-                      </div>
-                      {template.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {template.description}
-                        </p>
-                      )}
-                      {template.template_content && (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                          {template.template_content}
-                        </p>
-                      )}
-                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-widest border-primary/20 text-primary font-bold px-3">
+                      {template.type}
+                    </Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingTemplate(template);
-                        setName(template.name);
-                        setType(template.type);
-                        setTemplateContent(template.template_content || "");
-                        setDescription(template.description || "");
-                        setOpen(true);
-                      }}
-                      className="hover:bg-primary/10 hover:text-primary"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteTemplate.mutate(template.id)}
-                      className="hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  
+                  <div className="space-y-1">
+                    <h4 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">{template.name}</h4>
+                    {template.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-1 italic">
+                        {template.description}
+                      </p>
+                    )}
                   </div>
+
+                  <div className="p-4 rounded-xl bg-muted/30 border border-dashed border-muted-foreground/20">
+                    <p className="text-xs text-muted-foreground font-mono line-clamp-3 leading-relaxed">
+                      {template.template_content || "Sem conteúdo definido"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6 pt-6 border-t border-primary/5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-10 hover:bg-primary/10 hover:text-primary rounded-lg transition-all"
+                    onClick={() => {
+                      setEditingTemplate(template);
+                      setName(template.name);
+                      setType(template.type);
+                      setTemplateContent(template.template_content || "");
+                      setDescription(template.description || "");
+                      setOpen(true);
+                    }}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all"
+                    onClick={() => deleteTemplate.mutate(template.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}

@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { Building2, Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { LogoUpload } from "./LogoUpload";
 import { ImageUpload } from "./ImageUpload";
+import { getStorageUrl } from "@/utils/supabaseStorage";
 
 interface Coligada {
   id: string;
@@ -153,74 +154,95 @@ export const ColigadaManager = () => {
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
+    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in duration-500">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/20 transform transition-transform hover:scale-110 duration-300">
+              <Building2 className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle>Gestão de Coligadas</CardTitle>
-              <CardDescription>
-                Gerencie as coligadas e suas imagens (logo, assinatura e carimbo)
+              <CardTitle className="text-2xl font-bold tracking-tight">Gestão de Coligadas</CardTitle>
+              <CardDescription className="text-base text-muted-foreground/80">
+                Configure as empresas, logotipos e assinaturas oficiais
               </CardDescription>
             </div>
           </div>
-          <Button onClick={() => handleOpenDialog()} className="bg-gradient-to-r from-primary to-accent">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Coligada
+          <Button 
+            onClick={() => handleOpenDialog()} 
+            className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl font-bold"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Adicionar Coligada
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : coligadas && coligadas.length > 0 ? (
-          <div className="rounded-md border">
+          <div className="rounded-2xl overflow-hidden border border-primary/10 glass-card">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Logo</TableHead>
-                  <TableHead>Assinatura</TableHead>
-                  <TableHead>Carimbo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+              <TableHeader className="bg-primary/5">
+                <TableRow className="hover:bg-transparent border-primary/10">
+                  <TableHead className="py-5 font-bold text-foreground">Identificação</TableHead>
+                  <TableHead className="py-5 font-bold text-foreground">Logo</TableHead>
+                  <TableHead className="py-5 font-bold text-foreground">Assinatura</TableHead>
+                  <TableHead className="py-5 font-bold text-foreground">Carimbo</TableHead>
+                  <TableHead className="py-5 font-bold text-foreground text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {coligadas.map((coligada) => (
-                  <TableRow key={coligada.id}>
-                    <TableCell className="font-medium">{coligada.nome}</TableCell>
-                    <TableCell>
+                  <TableRow key={coligada.id} className="hover:bg-primary/5 transition-colors duration-200 border-primary/5">
+                    <TableCell className="py-5">
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-base leading-none">{coligada.nome}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{coligada.endereco || "Endereço não informado"}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
                       {coligada.company_logo_url ? (
-                        <img src={coligada.company_logo_url} alt="Logo" className="h-8 w-auto" />
+                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
+                          <img src={getStorageUrl(coligada.company_logo_url)} alt="Logo" className="h-10 w-auto object-contain" />
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
+                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                          <Building2 className="h-4 w-4 opacity-20" />
+                        </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-5">
                       {coligada.signature_url ? (
-                        <img src={coligada.signature_url} alt="Assinatura" className="h-8 w-auto" />
+                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
+                          <img src={getStorageUrl(coligada.signature_url)} alt="Assinatura" className="h-10 w-auto object-contain" />
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
+                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                          <Pencil className="h-4 w-4 opacity-20" />
+                        </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-5">
                       {coligada.stamp_url ? (
-                        <img src={coligada.stamp_url} alt="Carimbo" className="h-8 w-auto" />
+                        <div className="p-1 rounded-lg bg-white shadow-sm inline-block">
+                          <img src={getStorageUrl(coligada.stamp_url)} alt="Carimbo" className="h-10 w-auto object-contain" />
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
+                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                          <div className="h-4 w-4 rounded-full border-2 border-dashed opacity-20" />
+                        </div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-5 text-right">
                       <div className="flex gap-2 justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleOpenDialog(coligada)}
+                          className="h-10 w-10 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -228,7 +250,7 @@ export const ColigadaManager = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteColigada.mutate(coligada.id)}
-                          className="hover:bg-destructive/10 hover:text-destructive"
+                          className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

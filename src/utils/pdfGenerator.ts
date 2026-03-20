@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { getStorageUrl } from './supabaseStorage';
 
 interface DocumentData {
   employee_name: string;
@@ -43,19 +44,22 @@ export const generatePDF = async (document: DocumentData): Promise<void> => {
   let logoHeight = 0;
   if (document.company_logo_url) {
     try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = document.company_logo_url!;
-      });
-      
-      const imgWidth = 40;
-      const imgHeight = (img.height * imgWidth) / img.width;
-      // Logo no canto superior esquerdo
-      pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
-      logoHeight = imgHeight;
+      const url = getStorageUrl(document.company_logo_url);
+      if (url) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = url;
+        });
+        
+        const imgWidth = 40;
+        const imgHeight = (img.height * imgWidth) / img.width;
+        // Logo no canto superior esquerdo
+        pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        logoHeight = imgHeight;
+      }
     } catch (error) {
       console.error('Erro ao carregar logo:', error);
     }

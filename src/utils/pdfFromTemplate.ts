@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { getStorageUrl } from './supabaseStorage';
 
 interface TemplateDocumentData {
   employee_name: string;
@@ -20,23 +21,24 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
 
   // Adicionar logo no canto superior esquerdo
   let logoHeight = 0;
-  if (data.company_logo_url) {
-    try {
+  try {
+    const url = getStorageUrl(data.company_logo_url);
+    if (url) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
-        img.src = data.company_logo_url!;
+        img.src = url;
       });
       
       const imgWidth = 45;
       const imgHeight = (img.height * imgWidth) / img.width;
       pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
       logoHeight = imgHeight;
-    } catch (error) {
-      console.error('Erro ao carregar logo:', error);
     }
+  } catch (error) {
+    console.error('Erro ao carregar logo:', error);
   }
 
   // Adicionar data de emissão no canto superior direito
@@ -88,41 +90,43 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   const imagesY = yPosition;
 
   // Assinatura à esquerda
-  if (data.signature_url) {
-    try {
+  try {
+    const url = getStorageUrl(data.signature_url);
+    if (url) {
       const signatureImg = new Image();
       signatureImg.crossOrigin = 'anonymous';
       await new Promise((resolve, reject) => {
         signatureImg.onload = resolve;
         signatureImg.onerror = reject;
-        signatureImg.src = data.signature_url!;
+        signatureImg.src = url;
       });
       
       const signatureHeight = (signatureImg.height * imageSize) / signatureImg.width;
       const signatureX = margin + 10;
       pdf.addImage(signatureImg, 'PNG', signatureX, imagesY, imageSize, signatureHeight);
-    } catch (error) {
-      console.error('Erro ao carregar assinatura:', error);
     }
+  } catch (error) {
+    console.error('Erro ao carregar assinatura:', error);
   }
 
   // Carimbo à direita
-  if (data.stamp_url) {
-    try {
+  try {
+    const url = getStorageUrl(data.stamp_url);
+    if (url) {
       const stampImg = new Image();
       stampImg.crossOrigin = 'anonymous';
       await new Promise((resolve, reject) => {
         stampImg.onload = resolve;
         stampImg.onerror = reject;
-        stampImg.src = data.stamp_url!;
+        stampImg.src = url;
       });
       
       const stampHeight = (stampImg.height * imageSize) / stampImg.width;
       const stampX = pageWidth - margin - imageSize - 10;
       pdf.addImage(stampImg, 'PNG', stampX, imagesY, imageSize, stampHeight);
-    } catch (error) {
-      console.error('Erro ao carregar carimbo:', error);
     }
+  } catch (error) {
+    console.error('Erro ao carregar carimbo:', error);
   }
 
   // Rodapé com endereço da coligada e data

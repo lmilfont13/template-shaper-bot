@@ -25,6 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { FileText, Loader2, Eye, CheckSquare, Square } from "lucide-react";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
+import { getStorageUrl } from "@/utils/supabaseStorage";
 
 export const DocumentGenerator = () => {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -407,21 +408,21 @@ export const DocumentGenerator = () => {
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)]">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-            <FileText className="h-6 w-6 text-primary-foreground" />
+    <Card className="glass-card premium-shadow border-none overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-8">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-primary shadow-lg shadow-primary/30 transform transition-transform hover:scale-110 duration-300">
+            <FileText className="h-7 w-7 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle>Gerar Documento</CardTitle>
-            <CardDescription>
-              Preencha os dados para gerar um novo documento
+            <CardTitle className="text-2xl font-bold tracking-tight">Gerar Novo Documento</CardTitle>
+            <CardDescription className="text-base">
+              Selecione os parâmetros abaixo para automatizar sua documentação
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="p-8 space-y-8">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Funcionários</Label>
@@ -516,93 +517,191 @@ export const DocumentGenerator = () => {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="coligada-select">Coligada</Label>
-          <Select value={selectedColigadaId} onValueChange={setSelectedColigadaId}>
-            <SelectTrigger id="coligada-select" className="transition-all duration-200">
-              <SelectValue placeholder="Selecione a coligada" />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              {loadingColigadas ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : coligadas && coligadas.length > 0 ? (
-                coligadas.map((coligada) => (
-                  <SelectItem key={coligada.id} value={coligada.id}>
-                    {coligada.nome}
-                  </SelectItem>
-                ))
-              ) : (
-                <div className="py-4 text-center text-sm text-muted-foreground">
-                  Nenhuma coligada cadastrada
-                </div>
-              )}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <Label htmlFor="coligada-select" className="text-sm font-semibold uppercase tracking-wider opacity-70">Coligada Responsável</Label>
+            <Select value={selectedColigadaId} onValueChange={setSelectedColigadaId}>
+              <SelectTrigger id="coligada-select" className="h-12 glass-card hover:border-primary/50 transition-all duration-300">
+                <SelectValue placeholder="Selecione a coligada" />
+              </SelectTrigger>
+              <SelectContent className="glass-card border-primary/20">
+                {loadingColigadas ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                ) : coligadas && coligadas.length > 0 ? (
+                  coligadas.map((coligada) => (
+                    <SelectItem key={coligada.id} value={coligada.id} className="hover:bg-primary/10">
+                      {coligada.nome}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhuma coligada cadastrada
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-4">
+            <Label htmlFor="template-select" className="text-sm font-semibold uppercase tracking-wider opacity-70">Tipo de Documento</Label>
+            <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+              <SelectTrigger id="template-select" className="h-12 glass-card hover:border-primary/50 transition-all duration-300">
+                <SelectValue placeholder="Selecione o tipo de documento" />
+              </SelectTrigger>
+              <SelectContent className="glass-card border-primary/20">
+                {loadingTemplates ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                ) : templates && templates.length > 0 ? (
+                  templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id} className="hover:bg-primary/10">
+                      {template.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhum template cadastrado
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="template-select">Tipo de Documento</Label>
-          <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-            <SelectTrigger id="template-select" className="transition-all duration-200">
-              <SelectValue placeholder="Selecione o tipo de documento" />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              {loadingTemplates ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : templates && templates.length > 0 ? (
-                templates.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <div className="py-4 text-center text-sm text-muted-foreground">
-                  Nenhum template cadastrado
-                </div>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="store-name">Nome da Loja</Label>
+        <div className="space-y-4">
+          <Label htmlFor="store-name" className="text-sm font-semibold uppercase tracking-wider opacity-70">Identificação da Unidade (Loja)</Label>
           <Input
             id="store-name"
             type="text"
-            placeholder="Digite o nome da loja"
+            placeholder="Ex: Unidade Centro - São Paulo"
             value={storeName}
             onChange={(e) => setStoreName(e.target.value)}
-            className="transition-all duration-200"
+            className="h-12 glass-card focus:ring-primary/50 transition-all duration-300"
           />
         </div>
 
-        <Button
-          onClick={handleGenerate}
-          disabled={generateDocument.isPending}
-          className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-200 shadow-[var(--shadow-elegant)]"
-        >
-          {generateDocument.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Gerando...
-            </>
-          ) : (
-            "Gerar Documento"
-          )}
-        </Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-semibold uppercase tracking-wider opacity-70">Seleção de Funcionários</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={toggleSelectAll}
+              className="h-8 hover:text-primary transition-colors"
+            >
+              {selectedEmployeeIds.length === getFilteredEmployees()?.length && getFilteredEmployees().length > 0 ? (
+                <>
+                  <Square className="h-4 w-4 mr-2" />
+                  Limpar Seleção
+                </>
+              ) : (
+                <>
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Selecionar Todos
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Nome, CPF ou Cargo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-11 glass-card pl-10"
+                />
+                <Loader2 className="absolute left-3 top-3 h-5 w-5 opacity-20" />
+              </div>
+            </div>
+            {uniqueAgencias.length > 0 && (
+              <Select value={agenciaFilter || undefined} onValueChange={setAgenciaFilter}>
+                <SelectTrigger className="h-11 glass-card">
+                  <SelectValue placeholder="Todas agências" />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-primary/20">
+                  {uniqueAgencias.map((agencia) => (
+                    <SelectItem key={agencia} value={agencia}>
+                      {agencia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-        <Button
-          onClick={handlePreview}
-          variant="outline"
-          className="w-full"
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          Pré-visualizar
-        </Button>
+          <ScrollArea className="h-[280px] glass-card rounded-xl p-6 border-dashed">
+            {loadingEmployees ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
+              </div>
+            ) : getFilteredEmployees().length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {getFilteredEmployees().map((employee) => (
+                  <div 
+                    key={employee.id} 
+                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                      selectedEmployeeIds.includes(employee.id) 
+                        ? 'bg-primary/5 border-primary shadow-sm' 
+                        : 'hover:bg-secondary/5 border-transparent'
+                    }`}
+                    onClick={() => toggleEmployeeSelection(employee.id)}
+                  >
+                    <Checkbox
+                      id={`employee-${employee.id}`}
+                      checked={selectedEmployeeIds.includes(employee.id)}
+                      onCheckedChange={() => toggleEmployeeSelection(employee.id)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold leading-none">{employee.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                        {employee.position} {employee.agencia && `• ${employee.agencia}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground italic">
+                <FileText className="h-8 w-8 mb-2 opacity-20" />
+                <p>Nenhum resultado encontrado</p>
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <Button
+            onClick={handleGenerate}
+            disabled={generateDocument.isPending}
+            className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl"
+          >
+            {generateDocument.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Gerando Documentos...
+              </>
+            ) : (
+              "Finalizar e Emitir"
+            )}
+          </Button>
+
+          <Button
+            onClick={handlePreview}
+            variant="outline"
+            className="h-14 px-8 glass-card hover:bg-primary/5 hover:text-primary transition-all duration-300 rounded-xl"
+          >
+            <Eye className="mr-2 h-5 w-5" />
+            Pré-visualizar
+          </Button>
+        </div>
       </CardContent>
 
       {/* Dialog de Edição de Dados */}
@@ -678,7 +777,7 @@ export const DocumentGenerator = () => {
                     {previewData.company_logo_url && (
                       <div className="text-center">
                         <img 
-                          src={previewData.company_logo_url} 
+                          src={getStorageUrl(previewData.company_logo_url)} 
                           alt="Logo" 
                           className="max-h-20 mx-auto mb-1"
                         />
@@ -688,7 +787,7 @@ export const DocumentGenerator = () => {
                     {previewData.signature_url && (
                       <div className="text-center">
                         <img 
-                          src={previewData.signature_url} 
+                          src={getStorageUrl(previewData.signature_url)} 
                           alt="Assinatura" 
                           className="max-h-20 mx-auto mb-1"
                         />
@@ -698,7 +797,7 @@ export const DocumentGenerator = () => {
                     {previewData.stamp_url && (
                       <div className="text-center">
                         <img 
-                          src={previewData.stamp_url} 
+                          src={getStorageUrl(previewData.stamp_url)} 
                           alt="Carimbo" 
                           className="max-h-20 mx-auto mb-1"
                         />
