@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { getStorageUrl } from './supabaseStorage';
 
 interface TemplateDocumentData {
@@ -12,149 +13,107 @@ interface TemplateDocumentData {
   created_at: string;
 }
 
+/**
+ * Converte um texto (que pode ser HTML) em um PDF de alta qualidade.
+ * Usa html2canvas para renderizar o conteúdo formatado.
+ */
 export const generatePDFFromTemplate = async (data: TemplateDocumentData, returnBlob: boolean = false): Promise<void | Blob> => {
-  const pdf = new jsPDF();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 20;
-  let yPosition = 20;
+  // 1. Resolver as URLs das imagens
+  const logoUrl = await getStorageUrl(data.company_logo_url);
+  const signatureUrl = await getStorageUrl(data.signature_url);
+  const stampUrl = await getStorageUrl(data.stamp_url);
 
-  // Adicionar logo no canto superior esquerdo
-  let logoHeight = 0;
-  try {
-    const url = await getStorageUrl(data.company_logo_url);
-    if (url) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = url;
-      });
-      
-      const imgWidth = 45;
-      const imgHeight = (img.height * imgWidth) / img.width;
-      pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
-      logoHeight = imgHeight;
-    }
-  } catch (error) {
-    console.error('Erro ao carregar logo:', error);
+  // 2. Preparar o conteúdo HTML para renderização
+  // Se o texto não for HTML (legacy), envolvemos em tags básicos
+  let htmlContent = data.processedText;
+  if (!htmlContent.includes('<p>') && !htmlContent.includes('<div>')) {
+    htmlContent = `<div style="white-space: pre-wrap;">${htmlContent}</div>`;
   }
 
-  // Adicionar data de emissão no canto superior direito
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
+  // Substituir placeholders de assinatura e carimbo por imagens de alta qualidade
+  if (signatureUrl && htmlContent.includes('{{assinatura}}')) {
+    htmlContent = htmlContent.replace(/\{\{assinatura\}\}/gi, `<img src="${signatureUrl}" style="max-height: 80px; width: auto; object-fit: contain;" />`);
+  } else {
+    htmlContent = htmlContent.replace(/\{\{assinatura\}\}/gi, '');
+  }
+
+  if (stampUrl && htmlContent.includes('{{carimbo}}')) {
+    htmlContent = htmlContent.replace(/\{\{carimbo\}\}/gi, `<img src="${stampUrl}" style="max-height: 80px; width: auto; object-fit: contain;" />`);
+  } else {
+    htmlContent = htmlContent.replace(/\{\{carimbo\}\}/gi, '');
+  }
+
+  // 3. Criar container temporário para o "Papel A4"
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = '794px'; // Largura A4 em pixels (96 DPI)
+  container.style.padding = '60px'; // Margens
+  container.style.backgroundColor = 'white';
+  container.style.color = 'black';
+  container.style.fontFamily = 'Arial, sans-serif';
+  container.style.fontSize = '14px';
+  container.style.lineHeight = '1.6';
+
   const date = new Date(data.created_at);
   const dateStr = date.toLocaleDateString('pt-BR');
-  const dateText = `Data de emissão:\n${dateStr}`;
-  const dateLines = dateText.split('\n');
-  const dateY = yPosition + 5;
-  dateLines.forEach((line, index) => {
-    const textWidth = pdf.getTextWidth(line);
-    pdf.text(line, pageWidth - margin - textWidth, dateY + (index * 5));
-  });
 
-  // Ajustar yPosition para começar após a logo
-  yPosition = Math.max(margin + logoHeight + 12, dateY + 15);
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+      <div id="pdf-logo-container">
+        ${logoUrl ? `<img src="${logoUrl}" style="max-height: 60px; width: auto;" />` : ''}
+      </div>
+      <div style="text-align: right; font-size: 11px; color: #666;">
+        Data de emissão:<br/><strong>${dateStr}</strong>
+      </div>
+    </div>
+    
+    <div style="min-height: 700px; color: #111;">
+      ${htmlContent}
+    </div>
+    
+    <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 15px; text-align: center;">
+      <div style="font-size: 10px; color: #888;">
+        ${data.coligada_endereco || ''}
+      </div>
+      <div style="font-size: 9px; color: #aaa; margin-top: 5px;">
+        Documento gerado digitalmente em ${dateStr} às ${date.toLocaleTimeString('pt-BR')}
+      </div>
+    </div>
+  `;
 
-  // Remover placeholders do texto se existirem
-  let contentText = data.processedText;
-  contentText = contentText.replace(/\{\{assinatura\}\}/gi, '');
-  contentText = contentText.replace(/\{\{carimbo\}\}/gi, '');
+  document.body.appendChild(container);
 
-  // Conteúdo do documento com formatação de carta
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-
-  const maxWidth = pageWidth - (margin * 2);
-  const lineSpacing = 5;
-  const imageSize = 45; // Tamanho uniforme para ambas as imagens
-
-  // Dividir texto em linhas
-  const lines = pdf.splitTextToSize(contentText.trim(), maxWidth);
-  
-  for (const line of lines) {
-    if (yPosition > pageHeight - 80) {
-      break;
-    }
-    if (line.trim()) {
-      pdf.text(line, margin, yPosition);
-    }
-    yPosition += lineSpacing;
-  }
-
-  // Adicionar pequeno espaçamento após o texto
-  yPosition += 10;
-
-  // Inserir assinatura e carimbo lado a lado
-  const imagesY = yPosition;
-
-  // Assinatura à esquerda
   try {
-    const url = await getStorageUrl(data.signature_url);
-    if (url) {
-      const signatureImg = new Image();
-      signatureImg.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        signatureImg.onload = resolve;
-        signatureImg.onerror = reject;
-        signatureImg.src = url;
-      });
-      
-      const signatureHeight = (signatureImg.height * imageSize) / signatureImg.width;
-      const signatureX = margin + 10;
-      pdf.addImage(signatureImg, 'PNG', signatureX, imagesY, imageSize, signatureHeight);
+    // 4. Capturar como canvas
+    const canvas = await html2canvas(container, {
+      scale: 2, // Melhor qualidade
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+    // 5. Retornar ou salvar
+    const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
+    
+    if (returnBlob) {
+      return pdf.output('blob');
+    } else {
+      pdf.save(fileName);
     }
   } catch (error) {
-    console.error('Erro ao carregar assinatura:', error);
-  }
-
-  // Carimbo à direita
-  try {
-    const url = await getStorageUrl(data.stamp_url);
-    if (url) {
-      const stampImg = new Image();
-      stampImg.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        stampImg.onload = resolve;
-        stampImg.onerror = reject;
-        stampImg.src = url;
-      });
-      
-      const stampHeight = (stampImg.height * imageSize) / stampImg.width;
-      const stampX = pageWidth - margin - imageSize - 10;
-      pdf.addImage(stampImg, 'PNG', stampX, imagesY, imageSize, stampHeight);
-    }
-  } catch (error) {
-    console.error('Erro ao carregar carimbo:', error);
-  }
-
-  // Rodapé com endereço da coligada e data
-  pdf.setFontSize(7);
-  pdf.setTextColor(150, 150, 150);
-  const footerY = pageHeight - 10;
-  
-  if (data.coligada_endereco) {
-    const enderecoText = data.coligada_endereco;
-    const enderecoWidth = pdf.getTextWidth(enderecoText);
-    pdf.text(enderecoText, (pageWidth - enderecoWidth) / 2, footerY);
-  }
-  
-  const footerDate = new Date(data.created_at);
-  const footerDateStr = footerDate.toLocaleDateString('pt-BR');
-  const footerTimeStr = footerDate.toLocaleTimeString('pt-BR');
-  pdf.text(
-    `Gerado em ${footerDateStr} às ${footerTimeStr}`, 
-    margin, 
-    pageHeight - 5
-  );
-
-  // Retornar blob ou fazer download
-  const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
-  
-  if (returnBlob) {
-    return pdf.output('blob');
-  } else {
-    pdf.save(fileName);
+    console.error('Erro ao gerar imagem do PDF:', error);
+    throw error;
+  } finally {
+    document.body.removeChild(container);
   }
 };

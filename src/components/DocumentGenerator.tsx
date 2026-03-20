@@ -23,9 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { FileText, Loader2, Eye, CheckSquare, Square } from "lucide-react";
+import { FileText, Loader2, Eye, CheckSquare, Square, Download } from "lucide-react";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 import { getStorageUrl, useStorageUrl } from "@/utils/supabaseStorage";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 const PreviewImage = ({ path, alt, className }: { path: string | null | undefined, alt: string, className?: string }) => {
   const { url, loading } = useStorageUrl(path);
@@ -53,6 +55,8 @@ export const DocumentGenerator = () => {
   const [previewData, setPreviewData] = useState<any>(null);
   const [editableData, setEditableData] = useState<Record<string, any>>({});
   const [showDataEditor, setShowDataEditor] = useState(false);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
   const queryClient = useQueryClient();
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
@@ -374,10 +378,10 @@ export const DocumentGenerator = () => {
 
     // Substituir placeholders de imagens para preview
     if (coligada.signature_url && previewText.includes('{{assinatura}}')) {
-      previewText = previewText.replace(/{{assinatura}}/gi, '[ASSINATURA SERÁ INSERIDA AQUI]');
+      previewText = previewText.replace(/{{assinatura}}/gi, '<span style="color: #666; font-style: italic; border: 1px dashed #ccc; padding: 2px 4px;">[ASSINATURA]</span>');
     }
     if (coligada.stamp_url && previewText.includes('{{carimbo}}')) {
-      previewText = previewText.replace(/{{carimbo}}/gi, '[CARIMBO SERÁ INSERIDO AQUI]');
+      previewText = previewText.replace(/{{carimbo}}/gi, '<span style="color: #666; font-style: italic; border: 1px dashed #ccc; padding: 2px 4px;">[CARIMBO]</span>');
     }
 
     setPreviewData({
@@ -414,6 +418,95 @@ export const DocumentGenerator = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    if (selectedEmployeeIds.length === 0 || !selectedTemplate || !selectedColigadaId) {
+      toast({
+        title: "Seleção incompleta",
+        description: "Selecione funcionários, uma coligada e um template.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const template = templates?.find((t) => t.id === selectedTemplate);
+    const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
+    if (!template || !coligada) return;
+
+    setIsBulkGenerating(true);
+    setBulkProgress(0);
+    const zip = new JSZip();
+
+    try {
+      for (let i = 0; i < selectedEmployeeIds.length; i++) {
+        const employeeId = selectedEmployeeIds[i];
+        const employee = employees?.find((e) => e.id === employeeId);
+        if (!employee) continue;
+
+        // Mapear dados do funcionário
+        const employeeData = {
+          nome: employee.name || "",
+          nome_colaborador: employee.name || "",
+          cpf: employee.cpf || "",
+          rg: employee.rg || "",
+          carteira_trabalho: employee.numero_carteira_trabalho || "",
+          numero_carteira_trabalho: employee.numero_carteira_trabalho || "",
+          cargo_funcao: employee.position || "",
+          funcao: employee.position || "",
+          position: employee.position || "",
+          empresa: employee.company || "",
+          razao_social: employee.company || "",
+          unidade: storeName || employee.agencia || "",
+          loja: storeName || employee.agencia || "",
+          agencia: employee.agencia || "",
+          data_emissao: new Date().toLocaleDateString('pt-BR'),
+          data_atual: new Date().toLocaleDateString('pt-BR'),
+        };
+
+        // Processar template
+        let processedText = template.template_content || "";
+        Object.entries(employeeData).forEach(([key, value]) => {
+          const placeholder = `{{${key}}}`;
+          processedText = processedText.replace(new RegExp(placeholder, 'gi'), value);
+        });
+
+        // Gerar PDF como Blob
+        const pdfBlob = await generatePDFFromTemplate({
+          employee_name: employee.name,
+          template_name: template.name,
+          processedText: processedText,
+          company_logo_url: coligada.company_logo_url,
+          signature_url: coligada.signature_url,
+          stamp_url: coligada.stamp_url,
+          coligada_endereco: coligada.endereco,
+          created_at: new Date().toISOString(),
+        }, true) as Blob;
+
+        const fileName = `${employee.name.replace(/\s+/g, '_')}_${template.name.replace(/\s+/g, '_')}.pdf`;
+        zip.file(fileName, pdfBlob);
+        
+        setBulkProgress(Math.round(((i + 1) / selectedEmployeeIds.length) * 100));
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `documentos_${template.name.replace(/\s+/g, '_')}_${new Date().getTime()}.zip`);
+
+      toast({
+        title: "Download em lote concluído!",
+        description: `${selectedEmployeeIds.length} documentos foram compactados com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error("Erro na geração em lote:", error);
+      toast({
+        title: "Erro na geração em lote",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsBulkGenerating(false);
+      setBulkProgress(0);
     }
   };
 
@@ -599,18 +692,39 @@ export const DocumentGenerator = () => {
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <Button
             onClick={handleGenerate}
-            disabled={generateDocument.isPending}
+            disabled={generateDocument.isPending || isBulkGenerating}
             className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 hover:scale-[1.02] transition-all duration-300 premium-shadow rounded-xl"
           >
             {generateDocument.isPending ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Gerando Documentos...
+                Gravando...
               </>
             ) : (
-              "Finalizar e Emitir"
+              "Emitir e Salvar"
             )}
           </Button>
+
+          {selectedEmployeeIds.length > 1 && (
+            <Button
+              onClick={handleBulkDownload}
+              disabled={isBulkGenerating || generateDocument.isPending}
+              variant="outline"
+              className="h-14 px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all duration-300 rounded-xl"
+            >
+              {isBulkGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {bulkProgress}%
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-5 w-5" />
+                  Baixar Todos (ZIP)
+                </>
+              )}
+            </Button>
+          )}
 
           <Button
             onClick={handlePreview}
@@ -683,10 +797,11 @@ export const DocumentGenerator = () => {
                 <p className="text-sm text-muted-foreground">Coligada: {previewData.coligada_name}</p>
               </div>
               
-              <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-sm font-mono">
-                  {previewData.processedText}
-                </pre>
+              <div className="bg-white border p-8 rounded-lg max-h-96 overflow-y-auto premium-shadow">
+                <div 
+                  className="prose dark:prose-invert max-w-none text-sm text-black"
+                  dangerouslySetInnerHTML={{ __html: previewData.processedText }}
+                />
               </div>
 
               {(previewData.company_logo_url || previewData.signature_url || previewData.stamp_url) && (

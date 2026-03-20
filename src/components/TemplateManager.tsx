@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "./RichTextEditor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -173,17 +173,15 @@ export const TemplateManager = () => {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label htmlFor="template-content">Conteúdo do Template</Label>
-                  <Textarea
-                    id="template-content"
-                    placeholder="Exemplo:\n\nCarta de Apresentação\n\nA empresa {{empresa}} apresenta o colaborador {{nome}}, portador do RG {{rg}} e CPF {{cpf}}, para exercer a função de {{funcao}} na loja {{loja}}.\n\nData de emissão: {{data_emissao}}\n\nAtenciosamente,\nDepartamento de RH\n\n{{assinatura}}\n{{carimbo}}"
-                    value={templateContent}
-                    onChange={(e) => setTemplateContent(e.target.value)}
-                    className="min-h-[200px] font-mono text-sm"
+                  <RichTextEditor 
+                    key={editingTemplate?.id || 'new'}
+                    content={templateContent} 
+                    onChange={setTemplateContent} 
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Use placeholders como: {`{{nome}}`}, {`{{rg}}`}, {`{{cpf}}`}, {`{{funcao}}`}, {`{{empresa}}`}, {`{{loja}}`}, {`{{data_emissao}}`}, {`{{cargo}}`}, {`{{email}}`}, {`{{telefone}}`}, {`{{assinatura}}`}, {`{{carimbo}}`}, etc.
+                  <p className="text-[10px] text-muted-foreground mt-1 bg-muted/30 p-2 rounded">
+                    Dica: Use os botões acima para formatar e o menu "Inserir Variável" para adicionar campos automáticos.
                   </p>
                 </div>
               </div>
