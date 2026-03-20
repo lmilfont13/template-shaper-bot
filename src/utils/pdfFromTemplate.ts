@@ -60,75 +60,108 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
 
   yPosition += 40; // Espaço após cabeçalho
 
-  // 3. Processar o Texto (Limpar HTML básico do editor para garantir nitidez)
-  // O editor rico gera HTML. Para máxima nitidez vetorial, convertemos para texto puro
-  // mas mantendo quebras de linha.
-  let cleanText = data.processedText
+  // 3. Processar o Texto (Ancoragem por Placeholder)
+  const cleanText = data.processedText
     .replace(/<p>/g, '')
     .replace(/<\/p>/g, '\n')
     .replace(/<br\s*\/?>/g, '\n')
     .replace(/&nbsp;/g, ' ')
-    .replace(/<[^>]*>/g, ''); // Remove outras tags
-
-  // Remover placeholders de imagem do texto para não aparecerem como texto bruto
-  cleanText = cleanText.replace(/\{\{assinatura\}\}/gi, '').replace(/\{\{carimbo\}\}/gi, '');
+    .replace(/<[^>]*>/g, ''); 
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(11);
   pdf.setTextColor(0, 0, 0);
 
   const lines = pdf.splitTextToSize(cleanText, contentWidth);
+  let signaturePlaced = false;
+  let stampPlaced = false;
+
+  const IMG_SIZE = 40;
   
-  // Renderizar linhas respeitando as margens
+  // 1. Encontrar as coordenadas de cada placeholder
+  yPosition = topMargin + 40; // Reset para busca
+  const anchors: { type: 'sig' | 'stamp', x: number, y: number }[] = [];
+  
+  lines.forEach((line: string) => {
+    if (yPosition > pageHeight - 40) { yPosition = topMargin; }
+    
+    if (line.toLowerCase().includes('{{assinatura}}')) {
+      const textBefore = line.split(/\{\{assinatura\}\}/i)[0];
+      anchors.push({ type: 'sig', x: leftMargin + pdf.getTextWidth(textBefore), y: yPosition });
+    }
+    if (line.toLowerCase().includes('{{carimbo}}')) {
+      const textBefore = line.split(/\{\{carimbo\}\}/i)[0];
+      anchors.push({ type: 'stamp', x: leftMargin + pdf.getTextWidth(textBefore), y: yPosition });
+    }
+    yPosition += 6;
+  });
+
+  // 2. Renderizar o texto sem os placeholders
+  yPosition = topMargin + 40;
   lines.forEach((line: string) => {
     if (yPosition > pageHeight - 40) {
       pdf.addPage();
       yPosition = topMargin;
     }
-    pdf.text(line, leftMargin, yPosition);
-    yPosition += 6; // Espaçamento entre linhas
+    const lineToPrint = line.replace(/\{\{assinatura\}\}/gi, '').replace(/\{\{carimbo\}\}/gi, '');
+    pdf.text(lineToPrint, leftMargin, yPosition);
+    yPosition += 6;
   });
 
-  yPosition += 15;
+  // 3. Adicionar as imagens nas ancoras encontradas
+  for (const anchor of anchors) {
+    const url = anchor.type === 'sig' ? signatureUrl : stampUrl;
+    if (url) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = url;
+        });
+        const h = (img.height * IMG_SIZE) / img.width;
+        // Posicionar centralizado verticalmente na linha ou levemente acima
+        pdf.addImage(img, 'PNG', anchor.x, anchor.y - (h / 2), IMG_SIZE, h);
+      } catch (e) {}
+    }
+  }
 
-  // 4. Assinatura e Carimbo no final
-  if (signatureUrl || stampUrl) {
+  // 4. Fallback se não foram encontrados placeholders
+  if (anchors.length === 0 && (signatureUrl || stampUrl)) {
+    yPosition += 10;
     if (yPosition > pageHeight - 60) {
       pdf.addPage();
       yPosition = topMargin;
     }
 
-    const imgSize = 40;
-    
     if (signatureUrl) {
       try {
-        const sigImg = new Image();
-        sigImg.crossOrigin = 'anonymous';
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
         await new Promise((resolve, reject) => {
-          sigImg.onload = resolve;
-          sigImg.onerror = reject;
-          sigImg.src = signatureUrl;
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = signatureUrl;
         });
-        const sigH = (sigImg.height * imgSize) / sigImg.width;
-        pdf.addImage(sigImg, 'PNG', leftMargin, yPosition, imgSize, sigH);
+        const h = (img.height * IMG_SIZE) / img.width;
+        pdf.addImage(img, 'PNG', leftMargin, yPosition, IMG_SIZE, h);
       } catch (e) {}
     }
 
     if (stampUrl) {
       try {
-        const stampImg = new Image();
-        stampImg.crossOrigin = 'anonymous';
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
         await new Promise((resolve, reject) => {
-          stampImg.onload = resolve;
-          stampImg.onerror = reject;
-          stampImg.src = stampUrl;
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = stampUrl;
         });
-        const stH = (stampImg.height * imgSize) / stampImg.width;
-        pdf.addImage(stampImg, 'PNG', leftMargin + 60, yPosition, imgSize, stH);
+        const h = (img.height * IMG_SIZE) / img.width;
+        pdf.addImage(img, 'PNG', leftMargin + 50, yPosition, IMG_SIZE, h);
       } catch (e) {}
     }
-    
-    yPosition += 50;
   }
 
   // 5. Rodapé (Endereço)
