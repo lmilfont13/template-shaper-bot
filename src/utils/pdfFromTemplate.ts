@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { getStorageUrl } from './supabaseStorage';
 
 interface TemplateDocumentData {
@@ -14,106 +13,137 @@ interface TemplateDocumentData {
 }
 
 /**
- * Converte um texto (que pode ser HTML) em um PDF de alta qualidade.
- * Usa html2canvas para renderizar o conteúdo formatado.
+ * Converte o conteúdo do template em um PDF de alta qualidade usando comandos nativos.
+ * Prioriza nitidez vetorial e alinhamento padrão (25mm).
  */
 export const generatePDFFromTemplate = async (data: TemplateDocumentData, returnBlob: boolean = false): Promise<void | Blob> => {
-  // 1. Resolver as URLs das imagens
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const leftMargin = 25;
+  const rightMargin = 20;
+  const topMargin = 25;
+  const contentWidth = pageWidth - leftMargin - rightMargin;
+  let yPosition = topMargin;
+
+  // 1. Resolver URLs
   const logoUrl = await getStorageUrl(data.company_logo_url);
   const signatureUrl = await getStorageUrl(data.signature_url);
   const stampUrl = await getStorageUrl(data.stamp_url);
 
-  // 2. Preparar o conteúdo HTML para renderização
-  // Se o texto não for HTML (legacy), envolvemos em tags básicos
-  let htmlContent = data.processedText;
-  if (!htmlContent.includes('<p>') && !htmlContent.includes('<div>')) {
-    htmlContent = `<div style="white-space: pre-wrap;">${htmlContent}</div>`;
-  }
-
-  // Substituir placeholders de assinatura e carimbo por imagens de alta qualidade
-  if (signatureUrl && htmlContent.includes('{{assinatura}}')) {
-    htmlContent = htmlContent.replace(/\{\{assinatura\}\}/gi, `<img src="${signatureUrl}" style="max-height: 80px; width: auto; object-fit: contain;" />`);
-  } else {
-    htmlContent = htmlContent.replace(/\{\{assinatura\}\}/gi, '');
-  }
-
-  if (stampUrl && htmlContent.includes('{{carimbo}}')) {
-    htmlContent = htmlContent.replace(/\{\{carimbo\}\}/gi, `<img src="${stampUrl}" style="max-height: 80px; width: auto; object-fit: contain;" />`);
-  } else {
-    htmlContent = htmlContent.replace(/\{\{carimbo\}\}/gi, '');
-  }
-
-  // 3. Criar container temporário para o "Papel A4"
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.top = '-9999px';
-  container.style.width = '794px'; // Largura A4 em pixels (96 DPI)
-  container.style.padding = '60px'; // Margens
-  container.style.backgroundColor = 'white';
-  container.style.color = 'black';
-  container.style.fontFamily = 'Arial, sans-serif';
-  container.style.fontSize = '14px';
-  container.style.lineHeight = '1.6';
-
-  const date = new Date(data.created_at);
-  const dateStr = date.toLocaleDateString('pt-BR');
-
-  container.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
-      <div id="pdf-logo-container">
-        ${logoUrl ? `<img src="${logoUrl}" style="max-height: 60px; width: auto;" />` : ''}
-      </div>
-      <div style="text-align: right; font-size: 11px; color: #666;">
-        Data de emissão:<br/><strong>${dateStr}</strong>
-      </div>
-    </div>
-    
-    <div style="min-height: 700px; color: #111;">
-      ${htmlContent}
-    </div>
-    
-    <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 15px; text-align: center;">
-      <div style="font-size: 10px; color: #888;">
-        ${data.coligada_endereco || ''}
-      </div>
-      <div style="font-size: 9px; color: #aaa; margin-top: 5px;">
-        Documento gerado digitalmente em ${dateStr} às ${date.toLocaleTimeString('pt-BR')}
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(container);
-
-  try {
-    // 4. Capturar como canvas
-    const canvas = await html2canvas(container, {
-      scale: 2, // Melhor qualidade
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-    // 5. Retornar ou salvar
-    const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
-    
-    if (returnBlob) {
-      return pdf.output('blob');
-    } else {
-      pdf.save(fileName);
+  // 2. Cabeçalho (Logo e Data)
+  if (logoUrl) {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = logoUrl;
+      });
+      const imgWidth = 35;
+      const imgHeight = (img.height * imgWidth) / img.width;
+      pdf.addImage(img, 'PNG', leftMargin, yPosition, imgWidth, imgHeight);
+      // yPosition permanece para a data no mesmo nível
+    } catch (e) {
+      console.error('Erro ao carregar logo no PDF:', e);
     }
-  } catch (error) {
-    console.error('Erro ao gerar imagem do PDF:', error);
-    throw error;
-  } finally {
-    document.body.removeChild(container);
+  }
+
+  // Data alinhada à direita no topo
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(100, 100, 100);
+  const date = new Date(data.created_at);
+  const dateStr = `Data de emissão: ${date.toLocaleDateString('pt-BR')}`;
+  pdf.text(dateStr, pageWidth - rightMargin, yPosition + 5, { align: 'right' });
+
+  yPosition += 40; // Espaço após cabeçalho
+
+  // 3. Processar o Texto (Limpar HTML básico do editor para garantir nitidez)
+  // O editor rico gera HTML. Para máxima nitidez vetorial, convertemos para texto puro
+  // mas mantendo quebras de linha.
+  let cleanText = data.processedText
+    .replace(/<p>/g, '')
+    .replace(/<\/p>/g, '\n')
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]*>/g, ''); // Remove outras tags
+
+  // Remover placeholders de imagem do texto para não aparecerem como texto bruto
+  cleanText = cleanText.replace(/\{\{assinatura\}\}/gi, '').replace(/\{\{carimbo\}\}/gi, '');
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(11);
+  pdf.setTextColor(0, 0, 0);
+
+  const lines = pdf.splitTextToSize(cleanText, contentWidth);
+  
+  // Renderizar linhas respeitando as margens
+  lines.forEach((line: string) => {
+    if (yPosition > pageHeight - 40) {
+      pdf.addPage();
+      yPosition = topMargin;
+    }
+    pdf.text(line, leftMargin, yPosition);
+    yPosition += 6; // Espaçamento entre linhas
+  });
+
+  yPosition += 15;
+
+  // 4. Assinatura e Carimbo no final
+  if (signatureUrl || stampUrl) {
+    if (yPosition > pageHeight - 60) {
+      pdf.addPage();
+      yPosition = topMargin;
+    }
+
+    const imgSize = 40;
+    
+    if (signatureUrl) {
+      try {
+        const sigImg = new Image();
+        sigImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          sigImg.onload = resolve;
+          sigImg.onerror = reject;
+          sigImg.src = signatureUrl;
+        });
+        const sigH = (sigImg.height * imgSize) / sigImg.width;
+        pdf.addImage(sigImg, 'PNG', leftMargin, yPosition, imgSize, sigH);
+      } catch (e) {}
+    }
+
+    if (stampUrl) {
+      try {
+        const stampImg = new Image();
+        stampImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          stampImg.onload = resolve;
+          stampImg.onerror = reject;
+          stampImg.src = stampUrl;
+        });
+        const stH = (stampImg.height * imgSize) / stampImg.width;
+        pdf.addImage(stampImg, 'PNG', leftMargin + 60, yPosition, imgSize, stH);
+      } catch (e) {}
+    }
+    
+    yPosition += 50;
+  }
+
+  // 5. Rodapé (Endereço)
+  const footerY = pageHeight - 15;
+  pdf.setFontSize(8);
+  pdf.setTextColor(150, 150, 150);
+  pdf.text(data.coligada_endereco || '', pageWidth / 2, footerY, { align: 'center' });
+  pdf.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, footerY + 4, { align: 'center' });
+
+  // 6. Retorno
+  const fileName = `${data.employee_name.replace(/\s+/g, '_')}_${data.template_name.replace(/\s+/g, '_')}.pdf`;
+  
+  if (returnBlob) {
+    return pdf.output('blob');
+  } else {
+    pdf.save(fileName);
   }
 };
