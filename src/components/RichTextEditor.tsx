@@ -67,93 +67,100 @@ const RichTextEditor = ({ content, onChange, placeholder }: RichTextEditorProps)
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1 p-1 border rounded-md bg-muted/50">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={editor.isActive('underline') ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center gap-1 p-1 border rounded-md bg-muted/50 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={editor.isActive('bold') ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={editor.isActive('italic') ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <Italic className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={editor.isActive('underline') ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <UnderlineIcon className="h-4 w-4" />
+          </Button>
+        </div>
         
-        <div className="w-[1px] h-6 bg-border mx-1 my-auto" />
+        <div className="w-[1px] h-6 bg-border mx-1 shrink-0" />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={editor.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={editor.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <ListOrdered className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="w-[1px] h-6 bg-border mx-1 my-auto" />
+        <div className="w-[1px] h-6 bg-border mx-1 shrink-0" />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          className={editor.isActive({ textAlign: 'left' }) ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <AlignLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          className={editor.isActive({ textAlign: 'center' }) ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <AlignCenter className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          className={editor.isActive({ textAlign: 'right' }) ? 'bg-muted-foreground/20' : ''}
-          type="button"
-        >
-          <AlignRight className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={editor.isActive({ textAlign: 'left' }) ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <AlignLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={editor.isActive({ textAlign: 'center' }) ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <AlignCenter className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={editor.isActive({ textAlign: 'right' }) ? 'bg-muted-foreground/20' : ''}
+            type="button"
+          >
+            <AlignRight className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="w-[1px] h-6 bg-border mx-1 my-auto" />
+        <div className="w-[1px] h-6 bg-border mx-1 shrink-0" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-2 ml-auto">
+            <Button variant="outline" size="sm" className="h-8 gap-2 ml-auto shrink-0">
               <Type className="h-4 w-4" />
-              Inserir Variável
+              <span className="hidden sm:inline">Inserir Variável</span>
+              <span className="sm:hidden">Variáveis</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 glass-card">

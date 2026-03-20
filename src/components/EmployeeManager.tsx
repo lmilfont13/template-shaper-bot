@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { Users, Loader2, Trash2, Edit, Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -223,8 +224,8 @@ export const EmployeeManager = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="p-4 md:p-6 space-y-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-xs font-semibold">Nome Completo *</Label>
               <Input
@@ -341,28 +342,33 @@ export const EmployeeManager = () => {
             </div>
           )}
 
-          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-            <Label>Adicionar Campo Personalizado</Label>
-            <div className="flex gap-2">
+          <div className="space-y-2 p-3 md:p-4 rounded-lg bg-muted/50">
+            <Label className="text-xs font-bold uppercase tracking-wider opacity-70">Adicionar Campo Personalizado</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 placeholder="Nome do campo"
                 value={newFieldName}
                 onChange={(e) => setNewFieldName(e.target.value)}
+                className="h-10 bg-white/50"
               />
-              <Input
-                placeholder="Valor"
-                value={newFieldValue}
-                onChange={(e) => setNewFieldValue(e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleAddField}
-                disabled={!newFieldName.trim() || !newFieldValue.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2 flex-1">
+                <Input
+                  placeholder="Valor"
+                  value={newFieldValue}
+                  onChange={(e) => setNewFieldValue(e.target.value)}
+                  className="h-10 bg-white/50 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleAddField}
+                  disabled={!newFieldName.trim() || !newFieldValue.trim()}
+                  className="h-10 w-10 shrink-0"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -448,70 +454,124 @@ export const EmployeeManager = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : employees && employees.length > 0 ? (
-            <div className="rounded-2xl overflow-hidden border border-primary/10 glass-card">
-              <Table>
-                <TableHeader className="bg-primary/5">
-                  <TableRow className="hover:bg-transparent border-primary/10">
-                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Colaborador</TableHead>
-                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Documentação</TableHead>
-                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Cargo / Lotação</TableHead>
-                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Empresa / Coligada</TableHead>
-                    <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {employees.map((employee) => {
-                    const coligada = coligadas?.find(c => c.id === employee.coligada_id);
-                    return (
-                      <TableRow key={employee.id} className="hover:bg-primary/5 transition-colors border-primary/5">
-                        <TableCell className="py-3">
-                          <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{employee.name}</p>
-                        </TableCell>
-                        <TableCell className="py-3">
-                          <div className="flex flex-col gap-1">
-                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">CPF: {employee.cpf || "N/A"}</code>
-                            <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded w-fit">RG: {employee.rg || "N/A"}</code>
+            <div className="space-y-4">
+              {/* Tabela Desktop */}
+              <div className="hidden md:block rounded-2xl overflow-hidden border border-primary/10 glass-card">
+                <Table>
+                  <TableHeader className="bg-primary/5">
+                    <TableRow className="hover:bg-transparent border-primary/10">
+                      <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider tracking-tighter">Colaborador</TableHead>
+                      <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider tracking-tighter">Documentação</TableHead>
+                      <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider tracking-tighter">Cargo / Lotação</TableHead>
+                      <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider tracking-tighter">Empresa / Coligada</TableHead>
+                      <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider tracking-tighter">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees.map((employee) => {
+                      const coligada = coligadas?.find(c => c.id === employee.coligada_id);
+                      return (
+                        <TableRow key={employee.id} className="hover:bg-primary/5 transition-colors border-primary/5">
+                          <TableCell className="py-3">
+                            <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{employee.name}</p>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex flex-col gap-1">
+                              <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded w-fit">CPF: {employee.cpf || "N/A"}</code>
+                              <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded w-fit">RG: {employee.rg || "N/A"}</code>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-semibold">{employee.position || "Não definido"}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase">{employee.agencia || "Sem agência"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-semibold">{employee.company || "-"}</span>
+                              <span className="text-[10px] text-primary font-bold uppercase tracking-tighter">{coligada?.nome || "Vínculo externo"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3 text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(employee)}
+                                disabled={deleteEmployee.isPending}
+                                className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteEmployee.mutate(employee.id)}
+                                disabled={deleteEmployee.isPending}
+                                className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Grid Mobile */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {employees.map((employee) => {
+                  const coligada = coligadas?.find(c => c.id === employee.coligada_id);
+                  return (
+                    <div key={employee.id} className="p-4 rounded-xl border border-primary/10 glass-card space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <p className="font-bold text-lg leading-tight">{employee.name}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">CPF: {employee.cpf || "N/A"}</Badge>
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">RG: {employee.rg || "N/A"}</Badge>
                           </div>
-                        </TableCell>
-                        <TableCell className="py-3">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-semibold">{employee.position || "Não definido"}</span>
-                            <span className="text-[10px] text-muted-foreground uppercase">{employee.agencia || "Sem agência"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-3">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-semibold">{employee.company || "-"}</span>
-                            <span className="text-[10px] text-primary font-bold uppercase tracking-tighter">{coligada?.nome || "Vínculo externo"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-3 text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(employee)}
-                              disabled={deleteEmployee.isPending}
-                              className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-lg"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteEmployee.mutate(employee.id)}
-                              disabled={deleteEmployee.isPending}
-                              className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(employee)}
+                            className="h-9 w-9 p-0 rounded-lg"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteEmployee.mutate(employee.id)}
+                            className="h-9 w-9 p-0 rounded-lg hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-primary/5">
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] uppercase font-bold text-muted-foreground">Cargo / Lotação</p>
+                          <p className="text-xs font-semibold">{employee.position || "-"}</p>
+                          <p className="text-[10px] text-muted-foreground">{employee.agencia || "Sem lotação"}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] uppercase font-bold text-muted-foreground">Empresa / Coligada</p>
+                          <p className="text-xs font-semibold">{employee.company || "-"}</p>
+                          <p className="text-[10px] text-primary font-bold">{coligada?.nome || "Externo"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">

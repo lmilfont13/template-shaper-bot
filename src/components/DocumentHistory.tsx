@@ -241,39 +241,41 @@ export const DocumentHistory = () => {
                 className="p-4 rounded-xl glass-card transition-all duration-300 group"
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 rounded-lg bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-lg bg-primary/5 group-hover:bg-primary/10 transition-colors shrink-0">
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="text-base font-bold group-hover:text-primary transition-colors">{doc.employee_name}</h4>
-                        <div className="flex gap-2">
-                          <Badge variant="outline" className="text-[10px] uppercase tracking-widest border-accent/20 text-accent font-bold px-3">
+                        <h4 className="text-base font-bold group-hover:text-primary transition-colors truncate">{doc.employee_name}</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-[9px] uppercase tracking-wider border-accent/20 text-accent font-bold px-2 py-0">
                             {doc.template_name}
                           </Badge>
                           {doc.coligada_name && (
-                            <Badge variant="secondary" className="text-[10px] uppercase tracking-widest bg-secondary/10 text-secondary-foreground font-bold px-3">
+                            <Badge variant="secondary" className="text-[9px] uppercase tracking-wider bg-secondary/10 text-secondary-foreground font-bold px-2 py-0">
                               {doc.coligada_name}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">
+                      <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(doc.created_at), "dd 'de' MMMM, yyyy '•' HH:mm", {
-                            locale: ptBR,
-                          })}
+                          <span className="truncate">
+                            {format(new Date(doc.created_at), "dd 'de' MMMM, yyyy '•' HH:mm", {
+                              locale: ptBR,
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex gap-2 w-full lg:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="glass-card h-9 px-4 min-w-[100px]"
+                      className="flex-1 lg:flex-none glass-card h-10 px-4 min-w-[100px]"
                       onClick={() => handleDownload(doc)}
                       disabled={downloadingId === doc.id}
                     >
@@ -285,19 +287,19 @@ export const DocumentHistory = () => {
                       ) : (
                         <>
                           <Download className="h-4 w-4 mr-2" />
-                          Download PDF
+                          <span className="whitespace-nowrap">PDF</span>
                         </>
                       )}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="glass-card text-green-600 h-9 px-4"
+                      className="flex-1 lg:flex-none glass-card text-green-600 h-10 px-4"
                       onClick={() => handleWhatsAppShare(doc)}
                       disabled={downloadingId === doc.id}
                     >
                       <Share2 className="h-4 w-4 mr-2" />
-                      WhatsApp
+                      <span className="whitespace-nowrap">ZIP / Zap</span>
                     </Button>
                     <Button
                       variant="ghost"

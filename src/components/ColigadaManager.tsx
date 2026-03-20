@@ -195,76 +195,144 @@ export const ColigadaManager = () => {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : coligadas && coligadas.length > 0 ? (
-          <div className="rounded-2xl overflow-hidden border border-primary/10 glass-card">
-            <Table>
-              <TableHeader className="bg-primary/5">
-                <TableRow className="hover:bg-transparent border-primary/10">
-                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Identificação</TableHead>
-                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Logo</TableHead>
-                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Assinatura</TableHead>
-                  <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Carimbo</TableHead>
-                  <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {coligadas.map((coligada) => (
-                  <TableRow key={coligada.id} className="hover:bg-primary/5 transition-colors border-primary/5">
-                    <TableCell className="py-3">
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-base leading-none">{coligada.nome}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{coligada.endereco || "Endereço não informado"}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {coligada.company_logo_url ? (
-                        <StorageImage path={coligada.company_logo_url} alt="Logo" className="h-10 w-auto object-contain" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
-                          <Building2 className="h-4 w-4 opacity-20" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {coligada.signature_url ? (
-                        <StorageImage path={coligada.signature_url} alt="Assinatura" className="h-10 w-auto object-contain" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
-                          <Pencil className="h-4 w-4 opacity-20" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {coligada.stamp_url ? (
-                        <StorageImage path={coligada.stamp_url} alt="Carimbo" className="h-10 w-auto object-contain" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
-                          <div className="h-4 w-4 rounded-full border-2 border-dashed opacity-20" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(coligada)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteColigada.mutate(coligada.id)}
-                          className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <div className="space-y-4">
+            {/* Tabela para Desktop */}
+            <div className="hidden md:block rounded-2xl overflow-hidden border border-primary/10 glass-card">
+              <Table>
+                <TableHeader className="bg-primary/5">
+                  <TableRow className="hover:bg-transparent border-primary/10">
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Identificação</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Logo</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Assinatura</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-xs uppercase tracking-wider">Carimbo</TableHead>
+                    <TableHead className="py-3 font-bold text-foreground text-right text-xs uppercase tracking-wider">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {coligadas.map((coligada) => (
+                    <TableRow key={coligada.id} className="hover:bg-primary/5 transition-colors border-primary/5">
+                      <TableCell className="py-3">
+                        <div className="space-y-0.5">
+                          <p className="font-bold text-base leading-none">{coligada.nome}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{coligada.endereco || "Endereço não informado"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        {coligada.company_logo_url ? (
+                          <StorageImage path={coligada.company_logo_url} alt="Logo" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                            <Building2 className="h-4 w-4 opacity-20" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        {coligada.signature_url ? (
+                          <StorageImage path={coligada.signature_url} alt="Assinatura" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                            <Pencil className="h-4 w-4 opacity-20" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        {coligada.stamp_url ? (
+                          <StorageImage path={coligada.stamp_url} alt="Carimbo" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-muted/20 flex items-center justify-center">
+                            <div className="h-4 w-4 rounded-full border-2 border-dashed opacity-20" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3 text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(coligada)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteColigada.mutate(coligada.id)}
+                            className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Cards para Mobile */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {coligadas.map((coligada) => (
+                <div key={coligada.id} className="p-4 rounded-xl border border-primary/10 glass-card space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <p className="font-bold text-lg leading-tight">{coligada.nome}</p>
+                      <p className="text-xs text-muted-foreground">{coligada.endereco || "Sem endereço"}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDialog(coligada)}
+                        className="h-9 w-9 p-0"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteColigada.mutate(coligada.id)}
+                        className="h-9 w-9 p-0 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-primary/5">
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Logo</p>
+                      <div className="flex justify-center h-12">
+                        {coligada.company_logo_url ? (
+                          <StorageImage path={coligada.company_logo_url} alt="Logo" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <Building2 className="h-6 w-6 opacity-10" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Assinatura</p>
+                      <div className="flex justify-center h-12">
+                        {coligada.signature_url ? (
+                          <StorageImage path={coligada.signature_url} alt="Assinatura" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <Pencil className="h-6 w-6 opacity-10" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Carimbo</p>
+                      <div className="flex justify-center h-12">
+                        {coligada.stamp_url ? (
+                          <StorageImage path={coligada.stamp_url} alt="Carimbo" className="h-10 w-auto object-contain" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full border-2 border-dashed opacity-10" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="text-center py-12">

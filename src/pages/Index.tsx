@@ -44,19 +44,19 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <header className="mb-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-4 group">
+        <header className="mb-6 md:mb-8">
+          <div className="flex flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 group">
               <img 
                 src={tarhgetLogo} 
                 alt="Tarhget Logo" 
-                className="h-12 w-auto"
+                className="h-10 md:h-12 w-auto"
               />
-              <div className="text-left">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-                  Gerador de Documentos
+              <div className="text-left hidden sm:block">
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                  Gerador de Docs
                 </h1>
-                <p className="text-sm text-primary font-bold uppercase tracking-widest opacity-80">
+                <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-80">
                   Tarhget
                 </p>
               </div>
@@ -64,35 +64,35 @@ const Index = () => {
             <Button 
               variant="ghost" 
               onClick={handleLogout}
-              className="hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-full px-6"
+              className="hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-full px-3 md:px-6 h-10 md:h-11"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Encerrar Sessão
+              <LogOut className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Encerrar Sessão</span>
             </Button>
           </div>
         </header>
 
         <Tabs defaultValue="generate" className="space-y-6 animate-in fade-in duration-500">
-          <div className="flex justify-center md:justify-start">
-            <TabsList className={`glass-card p-0.5 h-auto ${isAdmin ? 'grid grid-cols-2 md:grid-cols-5' : 'grid grid-cols-2'} w-full max-w-2xl`}>
-              <TabsTrigger value="generate" className="rounded-lg py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+          <div className="flex justify-center md:justify-start -mx-4 px-4 overflow-x-auto pb-2 no-scrollbar">
+            <TabsList className={`glass-card p-0.5 h-auto flex flex-row ${isAdmin ? 'min-w-[600px] md:min-w-0 md:grid md:grid-cols-5' : 'grid grid-cols-2'} w-full`}>
+              <TabsTrigger value="generate" className="flex-1 rounded-lg py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                 Gerar
               </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-lg py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              <TabsTrigger value="history" className="flex-1 rounded-lg py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                 Histórico
               </TabsTrigger>
               {isAdmin && (
-                <TabsTrigger value="coligadas" className="rounded-lg py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                <TabsTrigger value="coligadas" className="flex-1 rounded-lg py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   Coligadas
                 </TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="employees" className="rounded-lg py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                <TabsTrigger value="employees" className="flex-1 rounded-lg py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   Funcionários
                 </TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="templates" className="rounded-lg py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                <TabsTrigger value="templates" className="flex-1 rounded-lg py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   Templates
                 </TabsTrigger>
               )}
