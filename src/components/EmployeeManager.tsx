@@ -44,7 +44,7 @@ export const EmployeeManager = () => {
         .from("coligadas")
         .select("*")
         .order("nome");
-      
+
       if (error) throw error;
       return data;
     },
@@ -57,7 +57,7 @@ export const EmployeeManager = () => {
         .from("employees")
         .select("*")
         .order("name");
-      
+
       if (error) throw error;
       return data;
     },
@@ -101,7 +101,7 @@ export const EmployeeManager = () => {
     onSuccess: () => {
       toast({
         title: editingEmployee ? "Funcionário atualizado!" : "Funcionário cadastrado!",
-        description: editingEmployee 
+        description: editingEmployee
           ? "O funcionário foi atualizado com sucesso."
           : "O funcionário foi adicionado com sucesso.",
       });
@@ -205,10 +205,10 @@ export const EmployeeManager = () => {
 
   return (
     <div className="space-y-6">
+      <EmployeeImport />
       <CleanEmptyEmployees />
       <RemoveDuplicates />
-      <EmployeeImport />
-      
+
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -417,17 +417,17 @@ export const EmployeeManager = () => {
                     { key: 'position', label: 'Função' },
                     { key: 'agencia', label: 'Agência' },
                   ];
-                  
+
                   const dataWithColigada = employees.map(emp => ({
                     ...emp,
                     coligada_nome: coligadas?.find(c => c.id === emp.coligada_id)?.nome || ''
                   }));
-                  
+
                   exportToCSV(dataWithColigada, 'funcionarios', [
                     ...columns,
                     { key: 'coligada_nome', label: 'Coligada' }
                   ]);
-                  
+
                   toast({
                     title: "Exportação concluída!",
                     description: "A lista de funcionários foi exportada.",

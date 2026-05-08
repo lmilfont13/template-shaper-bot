@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Loader2, X, Image } from "lucide-react";
+import { useEffect } from "react";
+import { getStorageUrl, fetchAndResolveImage } from "@/utils/supabaseStorage";
 
 interface LogoUploadProps {
   currentLogoUrl?: string;
@@ -14,7 +16,26 @@ interface LogoUploadProps {
 
 export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: LogoUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(currentLogoUrl || "");
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    let currentUrl: string | undefined = undefined;
+
+    if (currentLogoUrl) {
+      fetchAndResolveImage(currentLogoUrl).then(url => {
+        if (url) {
+          setPreviewUrl(url);
+          currentUrl = url;
+        }
+      });
+    }
+
+    return () => {
+      if (currentUrl && currentUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(currentUrl);
+      }
+    };
+  }, [currentLogoUrl]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -97,13 +118,13 @@ export const LogoUpload = ({ currentLogoUrl, onLogoUploaded, onLogoRemoved }: Lo
   return (
     <div className="space-y-3">
       <Label htmlFor="logo-upload">Logo da Empresa</Label>
-      
+
       {previewUrl ? (
         <div className="relative w-full max-w-xs">
           <div className="border-2 border-dashed rounded-lg p-4 bg-muted/50">
-            <img 
-              src={previewUrl} 
-              alt="Logo da empresa" 
+            <img
+              src={previewUrl}
+              alt="Logo da empresa"
               className="max-h-32 mx-auto object-contain"
             />
           </div>

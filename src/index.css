@@ -2,107 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    /* Main SaaS Colors - Deep Indigo & Slate */
+    --background: 220 33% 98%;
+    --foreground: 224 71.4% 4.1%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 224 71.4% 4.1%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 72% 46%;
+    --primary: 226 70% 50%;
+    --primary-foreground: 210 20% 98%;
+    --primary-hover: 226 70% 45%;
 
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 0 72% 51%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 226 70% 50%;
+    --accent-foreground: 210 20% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 72% 51%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 226 70% 50%;
 
     --radius: 0.75rem;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(0 72% 51%), hsl(0 0% 35%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
-    --shadow-elegant: 0 10px 40px -10px hsl(0 72% 51% / 0.2);
-    --shadow-card: 0 4px 20px -2px hsl(0 0% 20% / 0.08);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 0 0% 26%;
-
-    --sidebar-primary: 0 0% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 0 0% 95%;
-
-    --sidebar-accent-foreground: 0 0% 10%;
-
-    --sidebar-border: 0 0% 91%;
-
-    --sidebar-ring: 0 72% 51%;
+    --gradient-primary: linear-gradient(135deg, hsl(226 70% 50%), hsl(226 50% 30%));
+    --shadow-elegant: 0 10px 40px -10px hsl(226 70% 50% / 0.15);
   }
 
   .dark {
-    --background: 0 0% 11%;
-    --foreground: 0 0% 98%;
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
 
-    --card: 0 0% 17%;
-    --card-foreground: 0 0% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 72% 46%;
+    --primary: 226 70% 60%;
+    --primary-foreground: 224 71.4% 4.1%;
 
-    --secondary: 0 0% 17%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 0 72% 51%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 226 70% 60%;
+    --accent-foreground: 210 20% 98%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 0 0% 17%;
-    --input: 0 0% 17%;
-    --ring: 0 72% 51%;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(0 72% 51%), hsl(0 0% 35%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 11%), hsl(0 0% 14%));
-    --shadow-elegant: 0 10px 40px -10px hsl(0 72% 51% / 0.3);
-    --shadow-card: 0 4px 20px -2px hsl(0 0% 0% / 0.3);
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 72% 51%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 72% 51%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 226 70% 60%;
   }
 }
 
@@ -112,6 +77,17 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Custom UI Polish */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+
+.auth-gradient {
+  background: radial-gradient(circle at top left, hsl(226 70% 50% / 0.1), transparent),
+    radial-gradient(circle at bottom right, hsl(226 70% 50% / 0.05), transparent);
 }

@@ -25,6 +25,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { FileText, Loader2, Eye, CheckSquare, Square } from "lucide-react";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
+import { getStorageUrl } from "@/utils/supabaseStorage";
+import { SupabaseImage } from "./SupabaseImage";
 
 export const DocumentGenerator = () => {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -46,7 +48,7 @@ export const DocumentGenerator = () => {
         .from("employees")
         .select("*")
         .order("name");
-      
+
       if (error) throw error;
       return data;
     },
@@ -59,7 +61,7 @@ export const DocumentGenerator = () => {
         .from("document_templates")
         .select("*")
         .order("name");
-      
+
       if (error) throw error;
       return data;
     },
@@ -72,7 +74,7 @@ export const DocumentGenerator = () => {
         .from("coligadas")
         .select("*")
         .order("nome");
-      
+
       if (error) throw error;
       return data;
     },
@@ -84,19 +86,19 @@ export const DocumentGenerator = () => {
       if (!template) throw new Error("Template não encontrado");
 
       const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
-      
+
       if (!coligada) {
         throw new Error("Coligada não encontrada. Selecione uma coligada da lista.");
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error("Usuário não autenticado");
       }
 
       const selectedEmployees = employees?.filter((e) => selectedEmployeeIds.includes(e.id)) || [];
-      
+
       if (selectedEmployees.length === 0) {
         throw new Error("Nenhum funcionário selecionado.");
       }
@@ -149,12 +151,12 @@ export const DocumentGenerator = () => {
           coligada_id: selectedColigadaId,
           coligada_name: coligada.nome,
           status: "completed",
-          data: { 
-            ...templateData, 
+          data: {
+            ...templateData,
             processedText,
-            company_logo_url: coligada.company_logo_url || undefined,
-            signature_url: coligada.signature_url || undefined,
-            stamp_url: coligada.stamp_url || undefined,
+            company_logo_url: getStorageUrl(coligada.company_logo_url),
+            signature_url: getStorageUrl(coligada.signature_url),
+            stamp_url: getStorageUrl(coligada.stamp_url),
             coligada_endereco: coligada.endereco || undefined,
             created_at: new Date().toISOString(),
           },
@@ -167,14 +169,35 @@ export const DocumentGenerator = () => {
         .insert(documentsToInsert);
 
       if (error) throw error;
-      
+
       return documentsToInsert;
     },
     onSuccess: (data) => {
       toast({
-        title: "Documentos gerados!",
-        description: `${data.length} documento(s) criado(s) com sucesso.`,
+        title: "Documentos registrados!",
+        description: `${data.length} documento(s) salvos com sucesso.`,
       });
+      
+      data.forEach((doc, index) => {
+        setTimeout(async () => {
+          try {
+            console.log(`Iniciando download automático: ${doc.employee_name}`);
+            await generatePDFFromTemplate({
+              employee_name: doc.employee_name,
+              template_name: doc.template_name,
+              processedText: doc.data?.processedText || '',
+              company_logo_url: doc.data?.company_logo_url,
+              signature_url: doc.data?.signature_url,
+              stamp_url: doc.data?.stamp_url,
+              coligada_endereco: doc.data?.coligada_endereco,
+              created_at: doc.data?.created_at || new Date().toISOString(),
+            });
+          } catch (e) {
+            console.error("Erro no download:", e);
+          }
+        }, index * 2000); // 2 segundos entre cada arquivo
+      });
+
       queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
       setSelectedEmployeeIds([]);
       setSelectedColigadaId("");
@@ -241,24 +264,24 @@ export const DocumentGenerator = () => {
 
   const getFilteredEmployees = () => {
     if (!employees) return [];
-    
+
     let filtered = employees;
-    
+
     // Filter by agency
     if (agenciaFilter) {
       filtered = filtered.filter((emp) => emp.agencia === agenciaFilter);
     }
-    
+
     // Filter by search term
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter((emp) => 
+      filtered = filtered.filter((emp) =>
         emp.name.toLowerCase().includes(search) ||
         emp.cpf?.toLowerCase().includes(search) ||
         emp.position?.toLowerCase().includes(search)
       );
     }
-    
+
     return filtered;
   };
 
@@ -304,7 +327,7 @@ export const DocumentGenerator = () => {
     const template = templates?.find((t) => t.id === selectedTemplate);
     const employee = employees?.find((e) => e.id === selectedEmployeeIds[0]);
     const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
-    
+
     if (!template || !employee || !coligada) return;
 
     // Preparar dados editáveis
@@ -341,13 +364,13 @@ export const DocumentGenerator = () => {
   const handleContinueToPreview = () => {
     const template = templates?.find((t) => t.id === selectedTemplate);
     const coligada = coligadas?.find((c) => c.id === selectedColigadaId);
-    
+
     if (!template || !coligada) return;
 
     // Processar template com dados editados
     let processedText = template.template_content || "";
     let previewText = processedText;
-    
+
     if (processedText) {
       Object.entries(editableData).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
@@ -382,7 +405,7 @@ export const DocumentGenerator = () => {
 
   const handleDownloadPreview = async () => {
     if (!previewData) return;
-    
+
     try {
       await generatePDFFromTemplate({
         ...previewData,
@@ -614,7 +637,7 @@ export const DocumentGenerator = () => {
               Revise e ajuste os dados antes de gerar o documento. Você pode alterar qualquer campo sem precisar reimportar.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             {Object.entries(editableData).map(([key, value]) => (
               <div key={key} className="space-y-2">
@@ -656,7 +679,7 @@ export const DocumentGenerator = () => {
               Revise o conteúdo antes de gerar o documento final
             </DialogDescription>
           </DialogHeader>
-          
+
           {previewData && (
             <div className="space-y-4">
               <div className="border-b pb-2">
@@ -664,7 +687,7 @@ export const DocumentGenerator = () => {
                 <p className="text-sm text-muted-foreground">Funcionário: {previewData.employee_name}</p>
                 <p className="text-sm text-muted-foreground">Coligada: {previewData.coligada_name}</p>
               </div>
-              
+
               <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
                 <pre className="whitespace-pre-wrap text-sm font-mono">
                   {previewData.processedText}
@@ -677,30 +700,30 @@ export const DocumentGenerator = () => {
                   <div className="flex gap-4 flex-wrap">
                     {previewData.company_logo_url && (
                       <div className="text-center">
-                        <img 
-                          src={previewData.company_logo_url} 
-                          alt="Logo" 
-                          className="max-h-20 mx-auto mb-1"
+                        <SupabaseImage
+                          path={previewData.company_logo_url}
+                          alt="Logo"
+                          className="max-h-20 mx-auto mb-1 object-contain"
                         />
                         <p className="text-xs text-muted-foreground">Logo da Empresa</p>
                       </div>
                     )}
                     {previewData.signature_url && (
                       <div className="text-center">
-                        <img 
-                          src={previewData.signature_url} 
-                          alt="Assinatura" 
-                          className="max-h-20 mx-auto mb-1"
+                        <SupabaseImage
+                          path={previewData.signature_url}
+                          alt="Assinatura"
+                          className="max-h-20 mx-auto mb-1 object-contain"
                         />
                         <p className="text-xs text-muted-foreground">Assinatura</p>
                       </div>
                     )}
                     {previewData.stamp_url && (
                       <div className="text-center">
-                        <img 
-                          src={previewData.stamp_url} 
-                          alt="Carimbo" 
-                          className="max-h-20 mx-auto mb-1"
+                        <SupabaseImage
+                          path={previewData.stamp_url}
+                          alt="Carimbo"
+                          className="max-h-20 mx-auto mb-1 object-contain"
                         />
                         <p className="text-xs text-muted-foreground">Carimbo</p>
                       </div>

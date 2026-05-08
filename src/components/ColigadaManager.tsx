@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { Building2, Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { LogoUpload } from "./LogoUpload";
 import { ImageUpload } from "./ImageUpload";
+import { getStorageUrl } from "@/utils/supabaseStorage";
+import { SupabaseImage } from "./SupabaseImage";
 
 interface Coligada {
   id: string;
@@ -42,7 +44,7 @@ export const ColigadaManager = () => {
         .from("coligadas")
         .select("*")
         .order("nome");
-      
+
       if (error) throw error;
       return data as Coligada[];
     },
@@ -195,25 +197,25 @@ export const ColigadaManager = () => {
                   <TableRow key={coligada.id}>
                     <TableCell className="font-medium">{coligada.nome}</TableCell>
                     <TableCell>
-                      {coligada.company_logo_url ? (
-                        <img src={coligada.company_logo_url} alt="Logo" className="h-8 w-auto" />
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
+                      <SupabaseImage
+                        path={coligada.company_logo_url}
+                        alt="Logo"
+                        className="h-8 w-auto object-contain"
+                      />
                     </TableCell>
                     <TableCell>
-                      {coligada.signature_url ? (
-                        <img src={coligada.signature_url} alt="Assinatura" className="h-8 w-auto" />
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
+                      <SupabaseImage
+                        path={coligada.signature_url}
+                        alt="Assinatura"
+                        className="h-8 w-auto object-contain"
+                      />
                     </TableCell>
                     <TableCell>
-                      {coligada.stamp_url ? (
-                        <img src={coligada.stamp_url} alt="Carimbo" className="h-8 w-auto" />
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
+                      <SupabaseImage
+                        path={coligada.stamp_url}
+                        alt="Carimbo"
+                        className="h-8 w-auto object-contain"
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
@@ -257,7 +259,7 @@ export const ColigadaManager = () => {
               Preencha as informações da coligada e faça upload das imagens
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome da Coligada *</Label>

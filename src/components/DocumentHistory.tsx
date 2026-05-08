@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { History, Search, Download, Calendar, FileText, Loader2, Trash2, Share2 } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { generatePDFFromTemplate } from "@/utils/pdfFromTemplate";
 import { exportToCSV } from "@/utils/exportUtils";
+import { getStorageUrl } from "@/utils/supabaseStorage";
 
 export const DocumentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,7 +48,7 @@ export const DocumentHistory = () => {
         coligada_endereco: coligadaData?.endereco || doc.data?.coligada_endereco,
         created_at: doc.created_at,
       });
-      
+
       toast({
         title: "Download concluído!",
         description: "O documento foi baixado com sucesso.",
@@ -142,7 +144,7 @@ export const DocumentHistory = () => {
         .from("generated_documents")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
@@ -196,14 +198,14 @@ export const DocumentHistory = () => {
                   { key: 'coligada_name', label: 'Coligada' },
                   { key: 'created_at', label: 'Data de Criação' },
                 ];
-                
+
                 const formattedData = documents.map(doc => ({
                   ...doc,
                   created_at: format(new Date(doc.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
                 }));
-                
+
                 exportToCSV(formattedData, 'historico_documentos', columns);
-                
+
                 toast({
                   title: "Exportação concluída!",
                   description: "O histórico foi exportado.",
@@ -281,6 +283,55 @@ export const DocumentHistory = () => {
                           Download
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="group-hover:bg-blue-500 group-hover:text-white transition-colors"
+                      onClick={async () => {
+                        const token = window.prompt("Digite o seu Telegram Bot Token:");
+                        const chatId = window.prompt("Digite o Chat ID (ou @canal):");
+                        
+                        if (!token || !chatId) return;
+
+                        try {
+                          toast({ title: "Enviando para Telegram...", description: "Aguarde um instante." });
+                          
+                          // Gerar o PDF como Blob
+                          const pdfBlob = await generatePDFFromTemplate({
+                            employee_name: doc.employee_name,
+                            template_name: doc.template_name,
+                            processedText: doc.data?.processedText || '',
+                            company_logo_url: doc.data?.company_logo_url,
+                            signature_url: doc.data?.signature_url,
+                            stamp_url: doc.data?.stamp_url,
+                            coligada_endereco: doc.data?.coligada_endereco,
+                            created_at: doc.created_at,
+                          }, true) as Blob;
+
+                          const formData = new FormData();
+                          formData.append('chat_id', chatId);
+                          formData.append('document', pdfBlob, `${doc.employee_name.replace(/\s+/g, '_')}.pdf`);
+                          formData.append('caption', `📄 Documento: ${doc.template_name}\n👤 Funcionário: ${doc.employee_name}`);
+
+                          const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+                            method: 'POST',
+                            body: formData
+                          });
+
+                          if (response.ok) {
+                            toast({ title: "Enviado!", description: "O documento já está no Telegram." });
+                          } else {
+                            throw new Error("Falha na API do Telegram");
+                          }
+                        } catch (err) {
+                          toast({ title: "Erro no envio", description: "Verifique o Token e o Chat ID.", variant: "destructive" });
+                        }
+                      }}
+                      disabled={downloadingId === doc.id}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Telegram
                     </Button>
                     <Button
                       variant="outline"

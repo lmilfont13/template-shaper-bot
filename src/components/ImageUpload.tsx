@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, X, Image } from "lucide-react";
+import { useEffect } from "react";
+import { getStorageUrl, fetchAndResolveImage } from "@/utils/supabaseStorage";
 
 interface ImageUploadProps {
   label: string;
@@ -15,16 +17,35 @@ interface ImageUploadProps {
   id: string;
 }
 
-export const ImageUpload = ({ 
-  label, 
-  currentImageUrl, 
-  onImageUploaded, 
+export const ImageUpload = ({
+  label,
+  currentImageUrl,
+  onImageUploaded,
   onImageRemoved,
   folder = "images",
   id
 }: ImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(currentImageUrl || "");
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    let currentUrl: string | undefined = undefined;
+
+    if (currentImageUrl) {
+      fetchAndResolveImage(currentImageUrl).then(url => {
+        if (url) {
+          setPreviewUrl(url);
+          currentUrl = url;
+        }
+      });
+    }
+
+    return () => {
+      if (currentUrl && currentUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(currentUrl);
+      }
+    };
+  }, [currentImageUrl]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -107,13 +128,13 @@ export const ImageUpload = ({
   return (
     <div className="space-y-3">
       <Label htmlFor={id}>{label}</Label>
-      
+
       {previewUrl ? (
         <div className="relative w-full max-w-xs">
           <div className="border-2 border-dashed rounded-lg p-4 bg-muted/50">
-            <img 
-              src={previewUrl} 
-              alt={label} 
+            <img
+              src={previewUrl}
+              alt={label}
               className="max-h-32 mx-auto object-contain"
             />
           </div>
