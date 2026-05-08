@@ -76,37 +76,50 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   pdf.text(`Emitido em: ${dateStr}`, pageWidth - margin, 20, { align: 'right' }); // Desci a data para 20 (era 12)
   pdf.setTextColor(0);
 
-  // 3. Conteúdo (Com normalização de espaços)
+  // 3. Conteúdo (Processamento por parágrafos para evitar sobreposição)
   const cleanText = stripHtmlAndPlaceholders(data.processedText);
   pdf.setFontSize(11);
   pdf.setFont('helvetica', 'normal');
   
-  // Definir espaçamento entre linhas (Line Height)
-  const lineHeight = 6.5; 
+  const lineHeight = 7.0; // Espaçamento mais generoso
+  const maxWidth = pageWidth - (margin * 2);
   
-  // Dividir o texto em linhas respeitando a largura da página
-  const lines = pdf.splitTextToSize(cleanText, pageWidth - (margin * 2));
+  // Dividir primeiro por parágrafos reais (\n)
+  const paragraphs = cleanText.split('\n');
   
-  // Renderizar o texto garantindo que não haja sobreposição
-  lines.forEach((line: string) => {
-    // Verificar se precisa de nova página
-    if (y > pageHeight - 40) {
+  paragraphs.forEach((paragraph) => {
+    if (paragraph.trim() === '') {
+      y += lineHeight * 0.5; // Espaço para parágrafo vazio
+      return;
+    }
+    
+    // Dividir cada parágrafo em linhas que caibam na largura
+    const lines = pdf.splitTextToSize(paragraph, maxWidth);
+    
+    lines.forEach((line: string) => {
+      if (y > pageHeight - 50) { // Margem de segurança para carimbos
+        pdf.addPage();
+        y = 25;
+      }
+      pdf.text(line, margin, y);
+      y += lineHeight;
+    });
+    
+    y += 2; // Espaço extra entre parágrafos
+  });
+
+  y += 10; // Espaço antes da assinatura
+
+  // 4. Assinatura e Carimbo (Garantindo exibição)
+  if (data.signature_url || data.stamp_url) {
+    // Verificar se cabe na página atual, senão pula
+    if (y > pageHeight - 50) {
       pdf.addPage();
       y = 25;
     }
-    
-    // Imprimir a linha
-    pdf.text(line, margin, y);
-    
-    // Avançar o Y com um espaçamento seguro
-    y += lineHeight;
-  });
 
-  y += 5; // Espaço extra antes da assinatura
-
-  // 4. Assinatura e Carimbo
-  if (data.signature_url || data.stamp_url) {
-    const imgSize = 40;
+    const imgSize = 45;
+    const stampY = y;
 
     if (data.signature_url) {
       try {
@@ -115,10 +128,18 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         if (url) {
           const img = new Image();
           img.crossOrigin = 'anonymous';
-          await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-          pdf.addImage(img, 'PNG', margin, y, imgSize, (img.height * imgSize) / img.width);
+          await new Promise((res, rej) => { 
+            img.onload = res; 
+            img.onerror = rej; 
+            img.src = url; 
+          });
+          const h = (img.height * imgSize) / img.width;
+          pdf.addImage(img, 'PNG', margin, stampY, imgSize, h);
+          // y = Math.max(y, stampY + h); // Atualiza y para não sobrepor rodapé
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error("Erro ao carregar assinatura:", e);
+      }
     }
 
     if (data.stamp_url) {
@@ -128,17 +149,26 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         if (url) {
           const img = new Image();
           img.crossOrigin = 'anonymous';
-          await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-          pdf.addImage(img, 'PNG', pageWidth - margin - imgSize, y, imgSize, (img.height * imgSize) / img.width);
+          await new Promise((res, rej) => { 
+            img.onload = res; 
+            img.onerror = rej; 
+            img.src = url; 
+          });
+          const h = (img.height * imgSize) / img.width;
+          pdf.addImage(img, 'PNG', pageWidth - margin - imgSize, stampY, imgSize, h);
+          y = Math.max(y, stampY + h + 5);
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error("Erro ao carregar carimbo:", e);
+      }
     }
   }
 
   // 5. Rodapé
-  pdf.setFontSize(7);
+  pdf.setFontSize(8);
   pdf.setTextColor(150);
   if (data.coligada_endereco) {
+    // Garante que o endereço não sobreponha nada
     pdf.text(data.coligada_endereco, pageWidth / 2, pageHeight - 10, { align: 'center' });
   }
 
@@ -155,5 +185,8 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { document.body.removeChild(a); }, 3000);
+  setTimeout(() => { 
+    document.body.removeChild(a); 
+    URL.revokeObjectURL(url);
+  }, 3000);
 };
