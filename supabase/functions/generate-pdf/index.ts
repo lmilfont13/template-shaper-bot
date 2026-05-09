@@ -175,14 +175,19 @@ function generateHtmlContent(document: any): string {
     
     .footer {
       position: absolute;
-      bottom: 15mm;
+      bottom: 10mm;
       left: 20mm;
       right: 20mm;
       text-align: center;
       font-size: 8pt;
-      color: #888;
-      border-top: 0.5px solid #eee;
+      color: #666;
+      border-top: 1px solid #000;
       padding-top: 10px;
+    }
+    .footer-address {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
     }
   </style>
 </head>
@@ -219,7 +224,8 @@ function generateHtmlContent(document: any): string {
     </table>
     
     <div class="footer">
-      Gerado via Sistema Tarhget Docs em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+      ${data.coligada_endereco ? `<div class="footer-address">${data.coligada_endereco}</div>` : ''}
+      <div>Gerado via Sistema Tarhget Docs em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</div>
     </div>
   </div>
 </body>
