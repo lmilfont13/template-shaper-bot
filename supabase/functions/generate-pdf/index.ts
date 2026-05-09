@@ -60,8 +60,9 @@ Deno.serve(async (req) => {
     // Converter HTML para PDF
     const pdfBlob = await generatePdfFromHtml(htmlContent);
 
-    // Upload do PDF - use random UUID for unpredictable filenames
-    const filePath = `${crypto.randomUUID()}.pdf`;
+    // Upload do PDF - prefix with owner's user_id so storage RLS can enforce ownership
+    const ownerId = document.user_id ?? 'system';
+    const filePath = `${ownerId}/${crypto.randomUUID()}.pdf`;
 
     console.log('Uploading to:', filePath);
     
