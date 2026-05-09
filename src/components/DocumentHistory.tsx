@@ -287,55 +287,6 @@ export const DocumentHistory = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="group-hover:bg-blue-500 group-hover:text-white transition-colors"
-                      onClick={async () => {
-                        const token = window.prompt("Digite o seu Telegram Bot Token:");
-                        const chatId = window.prompt("Digite o Chat ID (ou @canal):");
-                        
-                        if (!token || !chatId) return;
-
-                        try {
-                          toast({ title: "Enviando para Telegram...", description: "Aguarde um instante." });
-                          
-                          // Gerar o PDF como Blob
-                          const pdfBlob = await generatePDFFromTemplate({
-                            employee_name: doc.employee_name,
-                            template_name: doc.template_name,
-                            processedText: doc.data?.processedText || '',
-                            company_logo_url: doc.data?.company_logo_url,
-                            signature_url: doc.data?.signature_url,
-                            stamp_url: doc.data?.stamp_url,
-                            coligada_endereco: doc.data?.coligada_endereco,
-                            created_at: doc.created_at,
-                          }, true) as Blob;
-
-                          const formData = new FormData();
-                          formData.append('chat_id', chatId);
-                          formData.append('document', pdfBlob, `${doc.employee_name.replace(/\s+/g, '_')}.pdf`);
-                          formData.append('caption', `📄 Documento: ${doc.template_name}\n👤 Funcionário: ${doc.employee_name}`);
-
-                          const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-                            method: 'POST',
-                            body: formData
-                          });
-
-                          if (response.ok) {
-                            toast({ title: "Enviado!", description: "O documento já está no Telegram." });
-                          } else {
-                            throw new Error("Falha na API do Telegram");
-                          }
-                        } catch (err) {
-                          toast({ title: "Erro no envio", description: "Verifique o Token e o Chat ID.", variant: "destructive" });
-                        }
-                      }}
-                      disabled={downloadingId === doc.id}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Telegram
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
                       className="group-hover:bg-green-600 group-hover:text-white transition-colors"
                       onClick={() => handleWhatsAppShare(doc)}
                       disabled={downloadingId === doc.id}

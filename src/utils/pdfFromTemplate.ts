@@ -57,68 +57,72 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         const img = new Image();
         img.crossOrigin = 'anonymous';
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-        const imgW = 35; // Um pouco menor para ficar mais elegante
+        const imgW = 40; 
         const imgH = (img.height * imgW) / img.width;
         pdf.addImage(img, 'PNG', margin, y, imgW, imgH);
-        y += imgH + 15; // Aumentei o espaço após o logo (era 8)
+        y += imgH + 25; // Aumentado significativamente o espaço após o logo
       }
     } catch (e) { 
-      y += 10; // Espaço padrão se falhar o logo
+      y += 20; 
     }
   } else {
-    y += 10; // Espaço inicial se não tiver logo
+    y += 20; 
   }
 
   // 2. Data
-  pdf.setFontSize(9);
-  pdf.setTextColor(120);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
   const dateStr = new Date(data.created_at).toLocaleDateString('pt-BR');
-  pdf.text(`Emitido em: ${dateStr}`, pageWidth - margin, 20, { align: 'right' }); // Desci a data para 20 (era 12)
-  pdf.setTextColor(0);
+  pdf.text(`Data de emissão: ${dateStr}`, pageWidth - margin, 20, { align: 'right' });
+  pdf.setFont('helvetica', 'normal');
 
-  // 3. Conteúdo (Processamento por parágrafos para evitar sobreposição)
+  // 3. Conteúdo
   const cleanText = stripHtmlAndPlaceholders(data.processedText);
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
   
-  const lineHeight = 7.0; // Espaçamento mais generoso
+  const lineHeight = 7.5; // Espaçamento levemente maior para evitar sobreposição
   const maxWidth = pageWidth - (margin * 2);
   
-  // Dividir primeiro por parágrafos reais (\n)
   const paragraphs = cleanText.split('\n');
   
   paragraphs.forEach((paragraph) => {
-    if (paragraph.trim() === '') {
-      y += lineHeight * 0.5; // Espaço para parágrafo vazio
+    const trimmed = paragraph.trim();
+    if (trimmed === '') {
+      y += lineHeight * 0.8;
       return;
     }
     
-    // Dividir cada parágrafo em linhas que caibam na largura
-    const lines = pdf.splitTextToSize(paragraph, maxWidth);
+    // Se a linha começar com "A Loja:", "A/C:" ou "Ref.:", aplicar negrito
+    if (trimmed.startsWith('A Loja:') || trimmed.startsWith('A/C:') || trimmed.startsWith('Ref.:')) {
+        pdf.setFont('helvetica', 'bold');
+    } else {
+        pdf.setFont('helvetica', 'normal');
+    }
+
+    const lines = pdf.splitTextToSize(trimmed, maxWidth);
     
     lines.forEach((line: string) => {
-      if (y > pageHeight - 50) { // Margem de segurança para carimbos
+      if (y > pageHeight - 65) { // Subi a margem de segurança
         pdf.addPage();
-        y = 25;
+        y = 30;
       }
       pdf.text(line, margin, y);
       y += lineHeight;
     });
     
-    y += 2; // Espaço extra entre parágrafos
+    y += 2.5; // Espaço extra entre blocos de texto
   });
 
-  y += 10; // Espaço antes da assinatura
+  y += 15; // Espaço maior antes da assinatura
 
-  // 4. Assinatura e Carimbo (Garantindo exibição)
+  // 4. Assinatura e Carimbo
   if (data.signature_url || data.stamp_url) {
-    // Verificar se cabe na página atual, senão pula
-    if (y > pageHeight - 50) {
+    if (y > pageHeight - 70) { // Garante que os carimbos não fiquem no fim da página
       pdf.addPage();
-      y = 25;
+      y = 30;
     }
 
-    const imgSize = 45;
+    const imgSize = 48;
     const stampY = y;
 
     if (data.signature_url) {
