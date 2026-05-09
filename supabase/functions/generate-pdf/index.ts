@@ -115,22 +115,13 @@ Deno.serve(async (req) => {
 
 function generateHtmlContent(document: any): string {
   const data = document.data || {};
-  const processedText = data.processedText || '';
+  let processedText = data.processedText || '';
   
-  // Se não houver texto processado, faz o fallback para o formato de lista (mas com visual melhor)
-  const contentHtml = processedText 
-    ? `<div class="letter-body">${processedText.split('\n').map(line => `<div>${line || '&nbsp;'}</div>`).join('')}</div>`
-    : `<div class="fields-list">
-        ${Object.entries(data).map(([key, value]) => {
-          if (['processedText', 'company_logo_url', 'signature_url', 'stamp_url', 'coligada_endereco', 'created_at'].includes(key)) return '';
-          return `
-            <div class="field">
-              <span class="field-label">${formatFieldName(key)}:</span>
-              <span class="field-value">${value || '---'}</span>
-            </div>
-          `;
-        }).join('')}
-      </div>`;
+  // Limpeza profunda de HTML para evitar conflitos de estilo
+  processedText = processedText.replace(/<br\s*\/?>/gi, '\n');
+  processedText = processedText.replace(/<p>/gi, '');
+  processedText = processedText.replace(/<\/p>/gi, '\n');
+  processedText = processedText.replace(/<[^>]*>?/gm, '');
 
   const logoUrl = data.company_logo_url || document.company_logo_url;
   const signatureUrl = data.signature_url;
@@ -145,123 +136,90 @@ function generateHtmlContent(document: any): string {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
     
     body {
-      font-family: 'Inter', 'Helvetica', Arial, sans-serif;
-      padding: 0;
+      font-family: 'Inter', Arial, sans-serif;
       margin: 0;
-      color: #1a1a1a;
+      padding: 0;
+      color: #000;
       background: white;
-      line-height: 1.8; /* Aumentado para evitar sobreposição */
+      font-size: 10.5pt;
+      line-height: 1.4;
     }
     .page {
-      padding: 25mm 20mm; /* Aumentei o topo */
+      width: 210mm;
+      height: 297mm;
+      padding: 15mm 20mm;
+      box-sizing: border-box;
       position: relative;
-      min-height: 247mm; 
     }
-    .header {
-      margin-bottom: 40px; /* Mais espaço após o cabeçalho */
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    .logo-container {
-      width: 160px;
-    }
-    .company-logo {
-      max-width: 100%;
-      height: auto;
-      object-fit: contain;
-    }
-    .date-container {
-      text-align: right;
-      font-size: 11px;
-      font-weight: 700;
-      color: #333;
-      margin-top: -5px;
-    }
-    .letter-body {
-      font-size: 11.5px;
-      line-height: 1.8;
-      text-align: justify;
-      margin-top: 30px;
-    }
-    .letter-body p, .letter-body div {
-      margin-bottom: 12px; /* Força espaço entre parágrafos */
-    }
-    .fields-list {
+    table { width: 100%; border-collapse: collapse; }
+    .header-table td { vertical-align: top; }
+    .logo { max-width: 140px; max-height: 80px; }
+    .date { text-align: right; font-weight: bold; font-size: 9pt; }
+    
+    .content {
       margin-top: 25px;
+      text-align: justify;
+      white-space: pre-wrap; /* Crucial para respeitar as quebras de linha */
     }
-    .field {
-      margin-bottom: 8px;
-      font-size: 11px;
+    
+    .signatures-table {
+      margin-top: 40px;
     }
-    .field-label {
-      font-weight: 700;
-      color: #444;
-    }
-    .signatures-section {
-      margin-top: 50px;
-      display: flex;
-      gap: 40px;
-      align-items: flex-start;
-    }
-    .signature-box {
+    .signature-cell {
+      width: 50%;
       text-align: center;
-      width: 180px;
+      padding: 10px;
     }
-    .signature-img, .stamp-img {
-      max-width: 160px;
-      max-height: 80px;
-      margin-bottom: 5px;
-    }
+    .sig-img { max-width: 150px; max-height: 70px; display: block; margin: 0 auto 5px auto; }
+    .sig-line { border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px; font-size: 8pt; }
+    
     .footer {
       position: absolute;
-      bottom: 10mm;
+      bottom: 15mm;
       left: 20mm;
       right: 20mm;
       text-align: center;
-      font-size: 9px;
-      color: #999;
+      font-size: 8pt;
+      color: #888;
       border-top: 0.5px solid #eee;
       padding-top: 10px;
     }
-    /* Estilo para negrito em labels específicas */
-    b, strong { font-weight: 700; }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="header">
-      <div class="logo-container">
-        ${logoUrl ? `<img src="${logoUrl}" class="company-logo" />` : ''}
-      </div>
-      <div class="date-container">
-        Data de emissão: ${new Date(document.created_at).toLocaleDateString('pt-BR')}
-      </div>
-    </div>
+    <table class="header-table">
+      <tr>
+        <td>
+          ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : ''}
+        </td>
+        <td class="date">
+          Data de emissão: ${new Date(document.created_at).toLocaleDateString('pt-BR')}
+        </td>
+      </tr>
+    </table>
     
-    <div class="content">
-      ${contentHtml}
-    </div>
+    <div class="content">${processedText.trim()}</div>
     
-    ${(signatureUrl || stampUrl) ? `
-      <div class="signatures-section">
+    <table class="signatures-table">
+      <tr>
         ${signatureUrl ? `
-          <div class="signature-box">
-            <img src="${signatureUrl}" class="signature-img" />
-            <div style="font-size: 10px; border-top: 1px solid #ccc; padding-top: 5px;">Assinatura</div>
-          </div>
+          <td class="signature-cell">
+            <img src="${signatureUrl}" class="sig-img" />
+            <div class="sig-line">Assinatura</div>
+          </td>
         ` : ''}
         ${stampUrl ? `
-          <div class="signature-box">
-            <img src="${stampUrl}" class="stamp-img" />
-            <div style="font-size: 10px; border-top: 1px solid #ccc; padding-top: 5px;">Carimbo</div>
-          </div>
+          <td class="signature-cell">
+            <img src="${stampUrl}" class="sig-img" />
+            <div class="sig-line">Carimbo</div>
+          </td>
         ` : ''}
-      </div>
-    ` : ''}
+      </tr>
+    </table>
     
     <div class="footer">
-      Gerado automaticamente pelo Sistema Tarhget Docs em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+      Gerado via Sistema Tarhget Docs em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
     </div>
   </div>
 </body>
