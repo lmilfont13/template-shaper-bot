@@ -115,9 +115,26 @@ Deno.serve(async (req) => {
 
 function generateHtmlContent(document: any): string {
   const data = document.data || {};
-  const logoHtml = document.company_logo_url 
-    ? `<img src="${document.company_logo_url}" alt="Logo" class="company-logo" />`
-    : '';
+  const processedText = data.processedText || '';
+  
+  // Se não houver texto processado, faz o fallback para o formato de lista (mas com visual melhor)
+  const contentHtml = processedText 
+    ? `<div class="letter-body">${processedText.replace(/\n/g, '<br>')}</div>`
+    : `<div class="fields-list">
+        ${Object.entries(data).map(([key, value]) => {
+          if (['processedText', 'company_logo_url', 'signature_url', 'stamp_url', 'coligada_endereco', 'created_at'].includes(key)) return '';
+          return `
+            <div class="field">
+              <span class="field-label">${formatFieldName(key)}:</span>
+              <span class="field-value">${value || '---'}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>`;
+
+  const logoUrl = data.company_logo_url || document.company_logo_url;
+  const signatureUrl = data.signature_url;
+  const stampUrl = data.stamp_url;
   
   return `
 <!DOCTYPE html>
@@ -125,86 +142,123 @@ function generateHtmlContent(document: any): string {
 <head>
   <meta charset="UTF-8">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    
     body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      line-height: 1.6;
-      color: #333;
+      font-family: 'Inter', 'Helvetica', Arial, sans-serif;
+      padding: 0;
+      margin: 0;
+      color: #1a1a1a;
+      background: white;
+    }
+    .page {
+      padding: 20mm;
+      position: relative;
+      min-height: 257mm; /* A4 minus margins */
     }
     .header {
+      margin-bottom: 30px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 40px;
-      border-bottom: 2px solid #333;
-      padding-bottom: 20px;
     }
-    .header-left {
-      flex: 1;
-    }
-    .header-right {
-      flex: 0 0 auto;
-      max-width: 200px;
+    .logo-container {
+      width: 150px;
     }
     .company-logo {
-      max-width: 150px;
-      max-height: 100px;
+      max-width: 100%;
+      height: auto;
       object-fit: contain;
     }
-    .title {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .content {
-      margin: 20px 0;
-    }
-    .field {
-      margin: 15px 0;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-left: 4px solid #333;
-    }
-    .field-label {
-      font-weight: bold;
-      color: #555;
-      margin-bottom: 5px;
-    }
-    .field-value {
+    .date-container {
+      text-align: right;
+      font-size: 11px;
+      font-weight: 700;
       color: #333;
     }
-    .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #ccc;
-      text-align: center;
-      color: #777;
-      font-size: 12px;
+    .letter-body {
+      font-size: 11.5px;
+      line-height: 1.6;
+      text-align: justify;
+      white-space: pre-line;
+      margin-top: 20px;
     }
+    .fields-list {
+      margin-top: 20px;
+    }
+    .field {
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+    .field-label {
+      font-weight: 700;
+      color: #444;
+    }
+    .signatures-section {
+      margin-top: 50px;
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+    }
+    .signature-box {
+      text-align: center;
+      width: 180px;
+    }
+    .signature-img, .stamp-img {
+      max-width: 160px;
+      max-height: 80px;
+      margin-bottom: 5px;
+    }
+    .footer {
+      position: absolute;
+      bottom: 10mm;
+      left: 20mm;
+      right: 20mm;
+      text-align: center;
+      font-size: 9px;
+      color: #999;
+      border-top: 0.5px solid #eee;
+      padding-top: 10px;
+    }
+    /* Estilo para negrito em labels específicas */
+    b, strong { font-weight: 700; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="header-left">
-      <div class="title">${document.template_name}</div>
-      <div>Funcionário: ${document.employee_name}</div>
-    </div>
-    <div class="header-right">
-      ${logoHtml}
-    </div>
-  </div>
-  
-  <div class="content">
-    ${Object.entries(data).map(([key, value]) => `
-      <div class="field">
-        <div class="field-label">${formatFieldName(key)}</div>
-        <div class="field-value">${value || 'Não informado'}</div>
+  <div class="page">
+    <div class="header">
+      <div class="logo-container">
+        ${logoUrl ? `<img src="${logoUrl}" class="company-logo" />` : ''}
       </div>
-    `).join('')}
-  </div>
-  
-  <div class="footer">
-    Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+      <div class="date-container">
+        Data de emissão: ${new Date(document.created_at).toLocaleDateString('pt-BR')}
+      </div>
+    </div>
+    
+    <div class="content">
+      ${contentHtml}
+    </div>
+    
+    ${(signatureUrl || stampUrl) ? `
+      <div class="signatures-section">
+        ${signatureUrl ? `
+          <div class="signature-box">
+            <img src="${signatureUrl}" class="signature-img" />
+            <div style="font-size: 10px; border-top: 1px solid #ccc; padding-top: 5px;">Assinatura</div>
+          </div>
+        ` : ''}
+        ${stampUrl ? `
+          <div class="signature-box">
+            <img src="${stampUrl}" class="stamp-img" />
+            <div style="font-size: 10px; border-top: 1px solid #ccc; padding-top: 5px;">Carimbo</div>
+          </div>
+        ` : ''}
+      </div>
+    ` : ''}
+    
+    <div class="footer">
+      Gerado automaticamente pelo Sistema Tarhget Docs em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+    </div>
   </div>
 </body>
 </html>
