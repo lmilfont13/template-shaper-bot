@@ -119,7 +119,7 @@ function generateHtmlContent(document: any): string {
   
   // Se não houver texto processado, faz o fallback para o formato de lista (mas com visual melhor)
   const contentHtml = processedText 
-    ? `<div class="letter-body">${processedText.replace(/\n/g, '<br>')}</div>`
+    ? `<div class="letter-body">${processedText.split('\n').map(line => `<div>${line || '&nbsp;'}</div>`).join('')}</div>`
     : `<div class="fields-list">
         ${Object.entries(data).map(([key, value]) => {
           if (['processedText', 'company_logo_url', 'signature_url', 'stamp_url', 'coligada_endereco', 'created_at'].includes(key)) return '';
@@ -150,20 +150,21 @@ function generateHtmlContent(document: any): string {
       margin: 0;
       color: #1a1a1a;
       background: white;
+      line-height: 1.8; /* Aumentado para evitar sobreposição */
     }
     .page {
-      padding: 20mm;
+      padding: 25mm 20mm; /* Aumentei o topo */
       position: relative;
-      min-height: 257mm; /* A4 minus margins */
+      min-height: 247mm; 
     }
     .header {
-      margin-bottom: 30px;
+      margin-bottom: 40px; /* Mais espaço após o cabeçalho */
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
     .logo-container {
-      width: 150px;
+      width: 160px;
     }
     .company-logo {
       max-width: 100%;
@@ -175,16 +176,19 @@ function generateHtmlContent(document: any): string {
       font-size: 11px;
       font-weight: 700;
       color: #333;
+      margin-top: -5px;
     }
     .letter-body {
       font-size: 11.5px;
-      line-height: 1.6;
+      line-height: 1.8;
       text-align: justify;
-      white-space: pre-line;
-      margin-top: 20px;
+      margin-top: 30px;
+    }
+    .letter-body p, .letter-body div {
+      margin-bottom: 12px; /* Força espaço entre parágrafos */
     }
     .fields-list {
-      margin-top: 20px;
+      margin-top: 25px;
     }
     .field {
       margin-bottom: 8px;
