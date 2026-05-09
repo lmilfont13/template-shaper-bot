@@ -57,30 +57,30 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
         const img = new Image();
         img.crossOrigin = 'anonymous';
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-        const imgW = 40; 
+        const imgW = 38; 
         const imgH = (img.height * imgW) / img.width;
         pdf.addImage(img, 'PNG', margin, y, imgW, imgH);
-        y += imgH + 25; // Aumentado significativamente o espaço após o logo
+        y += imgH + 15; // Reduzido para compactar
       }
     } catch (e) { 
-      y += 20; 
+      y += 12; 
     }
   } else {
-    y += 20; 
+    y += 12; 
   }
 
   // 2. Data
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
   const dateStr = new Date(data.created_at).toLocaleDateString('pt-BR');
-  pdf.text(`Data de emissão: ${dateStr}`, pageWidth - margin, 20, { align: 'right' });
+  pdf.text(`Data de emissão: ${dateStr}`, pageWidth - margin, 18, { align: 'right' }); // Subi a data para 18
   pdf.setFont('helvetica', 'normal');
 
   // 3. Conteúdo
   const cleanText = stripHtmlAndPlaceholders(data.processedText);
-  pdf.setFontSize(11);
+  pdf.setFontSize(10.5); // Reduzi levemente a fonte para ajudar no encaixe
   
-  const lineHeight = 7.5; // Espaçamento levemente maior para evitar sobreposição
+  const lineHeight = 6.8; // Altura de linha otimizada para página única
   const maxWidth = pageWidth - (margin * 2);
   
   const paragraphs = cleanText.split('\n');
@@ -88,11 +88,10 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
   paragraphs.forEach((paragraph) => {
     const trimmed = paragraph.trim();
     if (trimmed === '') {
-      y += lineHeight * 0.8;
+      y += lineHeight * 0.5;
       return;
     }
     
-    // Se a linha começar com "A Loja:", "A/C:" ou "Ref.:", aplicar negrito
     if (trimmed.startsWith('A Loja:') || trimmed.startsWith('A/C:') || trimmed.startsWith('Ref.:')) {
         pdf.setFont('helvetica', 'bold');
     } else {
@@ -102,27 +101,28 @@ export const generatePDFFromTemplate = async (data: TemplateDocumentData, return
     const lines = pdf.splitTextToSize(trimmed, maxWidth);
     
     lines.forEach((line: string) => {
-      if (y > pageHeight - 65) { // Subi a margem de segurança
+      // Tenta manter na mesma página se estiver muito perto do fim
+      if (y > pageHeight - 45) { 
         pdf.addPage();
-        y = 30;
+        y = 25;
       }
       pdf.text(line, margin, y);
       y += lineHeight;
     });
     
-    y += 2.5; // Espaço extra entre blocos de texto
+    y += 1.5; // Espaço extra reduzido
   });
 
-  y += 15; // Espaço maior antes da assinatura
+  y += 8; // Espaço reduzido antes da assinatura
 
   // 4. Assinatura e Carimbo
   if (data.signature_url || data.stamp_url) {
-    if (y > pageHeight - 70) { // Garante que os carimbos não fiquem no fim da página
+    if (y > pageHeight - 55) { 
       pdf.addPage();
-      y = 30;
+      y = 25;
     }
 
-    const imgSize = 48;
+    const imgSize = 42; // Reduzi levemente os carimbos para caberem melhor
     const stampY = y;
 
     if (data.signature_url) {
