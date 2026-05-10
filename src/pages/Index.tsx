@@ -4,6 +4,7 @@ import { DocumentHistory } from "@/components/DocumentHistory";
 import { TemplateManager } from "@/components/TemplateManager";
 import { EmployeeManager } from "@/components/EmployeeManager";
 import { ColigadaManager } from "@/components/ColigadaManager";
+import { QuickTemplate } from "@/components/QuickTemplate";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,7 +17,8 @@ import {
   PlusCircle,
   LayoutDashboard,
   Menu,
-  X
+  X,
+  Wand2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import tarhgetLogo from "@/assets/tarhget-logo.png";
@@ -58,6 +60,7 @@ const Index = () => {
 
   const navItems = [
     { id: "generate", label: "Gerar Documento", icon: PlusCircle, adminOnly: false },
+    { id: "quick", label: "Template Rápido", icon: Wand2, adminOnly: false },
     { id: "history", label: "Histórico de Envios", icon: History, adminOnly: false },
     { id: "coligadas", label: "Empresas Coligadas", icon: Building2, adminOnly: true },
     { id: "employees", label: "Gestão de Funcionários", icon: Users, adminOnly: true },
@@ -177,6 +180,7 @@ const Index = () => {
         <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar relative">
           <div className="max-w-6xl mx-auto animate-in slide-in-from-bottom-4 duration-700">
             {activeTab === "generate" && <DocumentGenerator />}
+            {activeTab === "quick" && <QuickTemplate />}
             {activeTab === "history" && <DocumentHistory />}
             {activeTab === "coligadas" && isAdmin && <ColigadaManager />}
             {activeTab === "employees" && isAdmin && <EmployeeManager />}
